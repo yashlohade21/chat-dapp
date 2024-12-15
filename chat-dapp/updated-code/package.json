@@ -1,0 +1,28 @@
+{
+  "name": "chatapp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
+    "chart.js": "^4.4.6",
+    "compromise": "^14.14.2",
+    "ethers": "^5.7.2",
+    "fuse.js": "^7.0.0",
+    "natural": "^8.0.1",
+    "next": "12.3.1",
+    "react": "18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "18.2.0",
+    "web3modal": "^1.9.9"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "hardhat": "^2.12.0"
+  }
+}

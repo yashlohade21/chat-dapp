@@ -1,0 +1,24 @@
+{
+  "name": "hardhat_sp_version",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "15.0.3",
+    "react": "19.0.0-rc-66855b96-20241106",
+    "react-dom": "19.0.0-rc-66855b96-20241106",
+    "ethers": "^5.7.2",
+    "web3modal": "^1.9.9"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.22.15",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1"
+  }
+}
