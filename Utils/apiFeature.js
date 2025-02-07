@@ -9,16 +9,22 @@ import {
 
 export const ChechIfWalletConnected = async () => {
   try {
-    if (!window.ethereum) return console.log("Install MateMask");
+    if (!window.ethereum) return console.log("Install MetaMask");
     const network = await handleNetworkSwitch();
     const accounts = await window.ethereum.request({
       method: "eth_accounts",
     });
 
+    if (accounts.length === 0) {
+      console.log("No accounts found. Please connect your wallet.");
+      return null;
+    }
+
     const firstAccount = accounts[0];
     return firstAccount;
   } catch (error) {
     console.log(error);
+    return null;
   }
 };
 
@@ -28,19 +34,19 @@ export const connectWallet = async () => {
       alert("Please install MetaMask");
       return;
     }
-    
-    // First switch to the correct network
+
+    // Switch to the correct network
     await handleNetworkSwitch();
-    
-    // Then request account access
+
+    // Request account access
     const accounts = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
-    
+
     if (!accounts || accounts.length === 0) {
       throw new Error("No accounts found");
     }
-    
+
     const firstAccount = accounts[0];
     return firstAccount;
   } catch (error) {
@@ -61,7 +67,7 @@ export const connectingWithContract = async (retries = 3) => {
       const provider = new ethers.providers.Web3Provider(connection);
       const signer = provider.getSigner();
       const contract = fetchContract(signer);
-      
+
       // Verify contract is deployed and accessible
       try {
         await contract.deployed();
@@ -74,27 +80,20 @@ export const connectingWithContract = async (retries = 3) => {
       console.error(`Contract connection attempt ${i + 1} failed:`, error);
       if (i === retries - 1) throw error;
       // Wait before retrying with exponential backoff
-      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.pow(2, i) * 1000)
+      );
     }
   }
   throw new Error("Failed to connect to contract after multiple attempts");
 };
 
 export const converTime = (time) => {
-  const newTime = new Date(time.toNumber());
+  const newTime = new Date(time.toNumber() * 1000); // Convert to milliseconds
 
-  const realTime =
-    newTime.getHours() +
-    "/" +
-    newTime.getMinutes() +
-    "/" +
-    newTime.getSeconds() +
-    "  Date:" +
-    newTime.getDate() +
-    "/" +
-    (newTime.getMonth() + 1) +
-    "/" +
-    newTime.getFullYear();
+  const realTime = `${newTime.getHours()}:${newTime.getMinutes()}:${newTime.getSeconds()} Date: ${newTime.getDate()}/${
+    newTime.getMonth() + 1
+  }/${newTime.getFullYear()}`;
 
   return realTime;
 };
