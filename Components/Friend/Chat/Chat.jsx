@@ -7,8 +7,8 @@ import Style from "./Chat.module.css";
 import images from "../../../assets";
 import { converTime } from "../../../Utils/apiFeature";
 import { Loader } from "../../index";
-// NEW: Import IPFSService for file uploads in chat
 import { IPFSService } from "../../../Utils/IPFSService";
+import { AIService } from "../../../Utils/AIService";
 
 const Chat = ({
   functionName,
@@ -21,7 +21,7 @@ const Chat = ({
   currentUserAddress,
   readUser,
 }) => {
-  // US STATE
+  // STATE
   const [message, setMessage] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [sentiment, setSentiment] = useState(null);
@@ -35,7 +35,6 @@ const Chat = ({
   useEffect(() => {
     if (!router.isReady) return;
     setChatData(router.query);
-    console.log(router.query);
   }, [router.isReady]);
 
   useEffect(() => {
@@ -45,13 +44,35 @@ const Chat = ({
     }
   }, []);
 
+  const handleMessageChange = (e) => {
+    const newMessage = e.target.value;
+    setMessage(newMessage);
+    
+    if (newMessage.length > 3) {
+      try {
+        const newSuggestions = AIService.generateReplySuggestions(newMessage);
+        setSuggestions(newSuggestions);
+        setSentiment(AIService.analyzeSentiment(newMessage));
+      } catch (error) {
+        console.error('Error generating suggestions:', error);
+        setSuggestions([]);
+        setSentiment(null);
+      }
+    } else {
+      setSuggestions([]);
+      setSentiment(null);
+    }
+  };
+
   const handleSendMessage = () => {
     if (!message.trim()) return;
     functionName({
       msg: message,
       address: router.query.address,
     });
-    setMessage(""); // Clear input after sending
+    setMessage("");
+    setSuggestions([]);
+    setSentiment(null);
   };
 
   return (
@@ -133,15 +154,8 @@ const Chat = ({
               <input
                 type="text"
                 placeholder="type your message"
-                onChange={(e) => {
-                  const newMessage = e.target.value;
-                  setMessage(newMessage);
-                  if (newMessage.length > 3) {
-                    const newSuggestions = AIService.generateReplySuggestions(newMessage);
-                    setSuggestions(newSuggestions);
-                    setSentiment(AIService.analyzeSentiment(newMessage));
-                  }
-                }}
+                value={message}
+                onChange={handleMessageChange}
               />
               {suggestions.length > 0 && (
                 <div className={Style.Chat_suggestions}>
@@ -157,7 +171,6 @@ const Chat = ({
                 </div>
               )}
               <div className={Style.file_upload}>
-                {/* NEW: File upload input using IPFS; on successful upload, alert the user */}
                 <input
                   type="file"
                   id="file"

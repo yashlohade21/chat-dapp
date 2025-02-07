@@ -178,6 +178,26 @@ export const ChatAppProvider = ({ children }) => {
     }
   }, [account]);
 
+  // Add function to check if patient settings exist
+  const checkPatientSettings = async (address) => {
+    try {
+      const contract = await connectingWithContract();
+      if (!contract) return false;
+      
+      // First check if the function exists
+      if (typeof contract.hasPatientSettings !== 'function') {
+        console.log("hasPatientSettings function not available");
+        return false;
+      }
+
+      const hasSettings = await contract.hasPatientSettings(address);
+      return hasSettings;
+    } catch (error) {
+      console.error("Error checking patient settings:", error);
+      return false;
+    }
+  };
+
   return (
     <ChatAppContect.Provider
       value={{
@@ -200,6 +220,7 @@ export const ChatAppProvider = ({ children }) => {
         currentUserAddress,
         doctors,
         loadingDoctors,
+        checkPatientSettings,
       }}
     >
       {children}

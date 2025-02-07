@@ -181,5 +181,5 @@ const PatientDataForm = ({ onSubmit, initialFormData = {}, onDocumentsUpdate, in
     </div>
   );
 };
-
+}
 export default PatientDataForm;

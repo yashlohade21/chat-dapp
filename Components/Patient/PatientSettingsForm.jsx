@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './PatientSettingsForm.module.css';
 import MedicalFileUpload from '../HIPAA/MedicalFileUpload';
 import { CryptoService } from '../../Utils/CryptoService';
@@ -43,9 +43,6 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       validationErrors.push("Invalid email format");
     }
-    if (formData.phone && !/^\+?[\d\s-]{10,}$/.test(formData.phone)) {
-      validationErrors.push("Invalid phone number format");
-    }
 
     if (validationErrors.length > 0) {
       setError(validationErrors.join(". "));
@@ -57,29 +54,21 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
       const contract = await connectingWithContract();
       
       // Get or generate encryption key
-      let encryptionKey = localStorage.getItem('patientEncryptionKey');
-      if (!encryptionKey) {
-        try {
-          encryptionKey = await CryptoService.generateMessageKey();
-          if (!encryptionKey) {
-            throw new Error("Failed to generate encryption key");
-          }
-          localStorage.setItem('patientEncryptionKey', encryptionKey);
-          console.log("Generated new encryption key");
-        } catch (error) {
-          console.error("Error generating key:", error);
-          setError("Failed to generate encryption key. Please try again.");
-          return;
-        }
-      }
+      const { publicKey, privateKey } = CryptoService.getPatientKeys();
       
+      // Store form data in localStorage for persistence
+      localStorage.setItem('patientFormData', JSON.stringify({
+        ...formData,
+        lastUpdated: Date.now()
+      }));
+
       // Encrypt data
       const encryptedData = CryptoService.encryptMessage(
         JSON.stringify({
           ...formData,
           lastUpdated: Date.now()
         }),
-        encryptionKey
+        privateKey
       );
 
       // Upload to IPFS
@@ -92,19 +81,23 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
         throw new Error('Failed to upload data to IPFS');
       }
 
-      // Update contract:
-      // For faucet/testnet mode, if the deployed contract does not expose updatePatientSettings,
-      // then we simulate a successful update to match the chat pattern.
+      // Store document metadata
+      const secureStorage = JSON.parse(localStorage.getItem('secureFileStorage') || '{}');
+      uploadedDocs.forEach(doc => {
+        secureStorage[doc.cid] = {
+          ...doc,
+          timestamp: Date.now()
+        };
+      });
+      localStorage.setItem('secureFileStorage', JSON.stringify(secureStorage));
+
+      // Update contract
       if (typeof contract.updatePatientSettings === "function") {
         const tx = await contract.updatePatientSettings(
           ipfsResult.cid,
           uploadedDocs.map(doc => doc.cid)
         );
         await tx.wait();
-      } else {
-        // In faucet/testnet mode, simulate successful update like chat functionality
-        console.log("Using faucet mode for patient settings");
-        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
       setSuccess('Medical information saved successfully!');
@@ -124,6 +117,21 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const savedData = localStorage.getItem('patientFormData');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        setFormData(prev => ({
+          ...prev,
+          ...parsed
+        }));
+      } catch (error) {
+        console.error('Error loading saved form data:', error);
+      }
+    }
+  }, []);
 
   return (
     <div className={styles.formContainer}>

@@ -1,7 +1,7 @@
-const axios = require('axios');
-const FormData = require('form-data');
+import axios from 'axios';
 
 const PINATA_API_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+const PINATA_PIN_JSON_URL = 'https://api.pinata.cloud/pinning/pinJSONToIPFS';
 const PINATA_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
 
 // Access environment variables
@@ -17,7 +17,7 @@ export const IPFSService = {
         throw new Error('Invalid file provided');
       }
 
-      // Check file size (limit to 10MB for example)
+      // Check file size (limit to 10MB)
       const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
       if (file.size > MAX_FILE_SIZE) {
         throw new Error('File size exceeds 10MB limit');
@@ -31,7 +31,7 @@ export const IPFSService = {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Add metadata
+      // Add metadata using browser-safe JSON
       const metadata = JSON.stringify({
         name: file.name,
         keyvalues: {
@@ -50,14 +50,13 @@ export const IPFSService = {
       formData.append('pinataOptions', options);
 
       const response = await axios.post(PINATA_API_URL, formData, {
-        maxBodyLength: 'Infinity',
+        maxBodyLength: Infinity,
         headers: {
-          'Content-Type': `multipart/form-data; boundary=${formData._boundary}`,
+          'Content-Type': 'multipart/form-data',
           pinata_api_key: PINATA_API_KEY,
           pinata_secret_api_key: PINATA_SECRET_KEY,
         },
         timeout: 30000, // 30 second timeout
-        validateStatus: status => status >= 200 && status < 300,
       });
 
       if (!response.data || !response.data.IpfsHash) {
@@ -87,33 +86,6 @@ export const IPFSService = {
     }
   },
 
-  // New function: Upload JSON (text) data to IPFS by converting it into a File
-  uploadJSON: async (jsonData, fileName = "data.json", retries = 3) => {
-    let lastError = null;
-    for (let attempt = 0; attempt < retries; attempt++) {
-      try {
-        const blob = new Blob([jsonData], { type: "application/json" });
-        const file = new File([blob], fileName, { type: "application/json" });
-        const result = await IPFSService.uploadFile(file);
-        if (result.success) {
-          return result;
-        }
-        lastError = new Error(result.error);
-      } catch (error) {
-        console.error(`Attempt ${attempt + 1} failed:`, error);
-        lastError = error;
-        if (attempt < retries - 1) {
-          // Exponential backoff
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
-        }
-      }
-    }
-    return {
-      success: false,
-      error: lastError?.message || 'Failed to upload after multiple attempts'
-    };
-  },
-
   // Get file from IPFS with retries
   getFile: async (cid, retries = 3) => {
     let lastError = null;
@@ -121,11 +93,18 @@ export const IPFSService = {
       try {
         const response = await axios.get(`${PINATA_GATEWAY}${cid}`, {
           timeout: 10000, // 10 second timeout
-          validateStatus: status => status >= 200 && status < 300,
+          responseType: 'arraybuffer', // Use arraybuffer for binary data
         });
+        
+        // Convert arraybuffer to base64
+        const base64Data = btoa(
+          new Uint8Array(response.data)
+            .reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+        
         return {
           success: true,
-          data: response.data
+          data: base64Data
         };
       } catch (error) {
         console.error(`IPFS fetch attempt ${i + 1} failed:`, error);
@@ -144,5 +123,92 @@ export const IPFSService = {
   // Validate CID format
   isValidCID: (cid) => {
     return typeof cid === 'string' && cid.length > 0 && /^[a-zA-Z0-9]+$/.test(cid);
+  },
+
+  // New: Upload JSON to IPFS (Pinata)
+  uploadJSON: async (jsonData, fileName) => {
+    try {
+      if (!PINATA_API_KEY || !PINATA_SECRET_KEY) {
+        throw new Error('Pinata API keys not configured');
+      }
+      // Wrap the encrypted patient data string in an object so it’s valid JSON.
+      const contentObject = { data: jsonData };
+      
+      const metadata = {
+        name: fileName,
+        keyvalues: {
+          uploadTime: new Date().toISOString(),
+        },
+      };
+      
+      const options = {
+        cidVersion: 1,
+      };
+      
+      const body = {
+        pinataContent: contentObject,
+        pinataMetadata: metadata,
+        pinataOptions: options,
+      };
+      
+      const response = await axios.post(PINATA_PIN_JSON_URL, body, {
+        headers: {
+          'Content-Type': 'application/json',
+          pinata_api_key: PINATA_API_KEY,
+          pinata_secret_api_key: PINATA_SECRET_KEY,
+        },
+        timeout: 30000,
+      });
+      
+      if (!response.data || !response.data.IpfsHash) {
+        throw new Error('Invalid response from Pinata JSON upload');
+      }
+      
+      return {
+        success: true,
+        cid: response.data.IpfsHash,
+        url: `${PINATA_GATEWAY}${response.data.IpfsHash}`,
+      };
+    } catch (error) {
+      console.error('Error uploading JSON to IPFS:', error);
+      let errorMessage = 'Failed to upload JSON';
+      if (error.response) {
+        errorMessage = error.response.data?.error?.details || error.response.data?.message || errorMessage;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
+  },
+
+  // New: Get JSON from IPFS – for retrieving patient data
+  getJSON: async (cid, retries = 3) => {
+    let lastError = null;
+    for (let i = 0; i < retries; i++) {
+      try {
+        const response = await axios.get(`${PINATA_GATEWAY}${cid}`, {
+          timeout: 10000, // 10 second timeout
+          responseType: 'text', // Get as text since it is a JSON file
+        });
+        
+        return {
+          success: true,
+          data: response.data,
+        };
+      } catch (error) {
+        console.error(`IPFS JSON fetch attempt ${i + 1} failed:`, error);
+        lastError = error;
+        if (i < retries - 1) {
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+        }
+      }
+    }
+    return {
+      success: false,
+      error: lastError?.message || 'Failed to fetch JSON after multiple attempts',
+    };
   }
 };

@@ -8,10 +8,9 @@ import { CryptoService } from '../Utils/CryptoService';
 import { IPFSService } from '../Utils/IPFSService';
 
 const Settings = () => {
-  const { account } = useContext(ChatAppContect);
+  const { account, checkPatientSettings } = useContext(ChatAppContect) || {};
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [documents, setDocuments] = useState([]);
-  // formData will contain the decrypted patient data (if any)
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState('');
@@ -23,75 +22,84 @@ const Settings = () => {
         setLoading(false);
         return;
       }
+
       try {
         setLoadingMessage('Connecting to blockchain...');
         const contract = await connectingWithContract();
         if (!contract) {
           throw new Error("Could not connect to blockchain");
         }
-        
-        // Verify contract has required functions
-        if (typeof contract.getPatientSettings !== 'function' || 
-            typeof contract.hasPatientSettings !== 'function') {
-          setError("Patient settings feature is not available in your current contract version.");
+
+        // Get patient keys
+        const { publicKey, privateKey } = CryptoService.getPatientKeys();
+        if (!publicKey || !privateKey) {
+          setError("Encryption keys not found. Please save your settings first.");
           setLoading(false);
           return;
         }
-        
-        const hasSettings = await contract.hasPatientSettings(account);
-        if (!hasSettings) {
-          // No saved settings – show empty form
-          setLoading(false);
-          return;
-        }
-        
-        setLoadingMessage('Fetching patient settings...');
-        let settings;
-        try {
-          settings = await contract.getPatientSettings(account);
-        } catch (error) {
-          if (error.message.includes("User not registered")) {
-            setError("Please register your account first");
-            setLoading(false);
-            return;
+
+        // Try to load from localStorage first for immediate display
+        const savedData = localStorage.getItem('patientFormData');
+        if (savedData) {
+          try {
+            const parsed = JSON.parse(savedData);
+            setFormData(parsed);
+          } catch (error) {
+            console.error('Error loading saved form data:', error);
           }
-          throw error;
         }
-        if (settings && settings.patientDataCID) {
-          setLoadingMessage('Retrieving encrypted data from IPFS...');
-          const ipfsResult = await IPFSService.getFile(settings.patientDataCID);
-          if (ipfsResult.success) {
-            // Replace the hard-coded encryption key with your key management logic
-            const encryptionKey = "YOUR_ENCRYPTION_KEY";
-            const decryptedData = CryptoService.decryptMessage(ipfsResult.data, encryptionKey);
-            let parsedData;
-            try {
-              parsedData = JSON.parse(decryptedData);
-              // Validate required fields exist
-              if (!parsedData.name || !parsedData.email) {
-                throw new Error("Retrieved data is missing required fields");
+
+        // Load documents from localStorage
+        const secureStorage = JSON.parse(localStorage.getItem('secureFileStorage') || '{}');
+        if (Object.keys(secureStorage).length > 0) {
+          const docs = Object.values(secureStorage);
+          setDocuments(docs);
+        }
+
+        // Then load from blockchain/IPFS for latest data
+        const hasSettings = await checkPatientSettings(account);
+        if (hasSettings) {
+          setLoadingMessage('Fetching patient settings...');
+          try {
+            const settings = await contract.getPatientSettings(account);
+            
+            if (settings && settings.patientDataCID) {
+              setLoadingMessage('Retrieving encrypted data from IPFS...');
+              const ipfsResult = await IPFSService.getJSON(settings.patientDataCID);
+              
+              if (ipfsResult.success && ipfsResult.data) {
+                try {
+                  const encryptedData = typeof ipfsResult.data === 'string' 
+                    ? ipfsResult.data 
+                    : ipfsResult.data.data;
+
+                  const decryptedData = CryptoService.decryptMessage(encryptedData, privateKey);
+                  const parsedData = JSON.parse(decryptedData);
+
+                  setFormData(parsedData);
+                  localStorage.setItem('patientFormData', JSON.stringify(parsedData));
+
+                  if (settings.documentCIDs && settings.documentCIDs.length > 0) {
+                    const updatedDocs = settings.documentCIDs.map(cid => ({
+                      ...secureStorage[cid],
+                      cid,
+                      url: `https://gateway.pinata.cloud/ipfs/${cid}`,
+                    }));
+                    setDocuments(updatedDocs);
+                  }
+                } catch (parseError) {
+                  console.error("Error parsing decrypted data:", parseError);
+                  setError("Retrieved data is invalid. Please try saving your settings again.");
+                }
               }
-              setFormData(parsedData);
-            } catch (parseError) {
-              console.error("Error parsing decrypted data:", parseError);
-              setError("Retrieved data is invalid. Please try saving your settings again.");
-              return;
             }
-            if (settings.documentCIDs && settings.documentCIDs.length > 0) {
-              const docs = settings.documentCIDs.map(cid => ({
-                cid,
-                url: `https://gateway.pinata.cloud/ipfs/${cid}`,
-                name: `Document ${cid.substring(0, 8)}...`,
-                timestamp: Date.now(),
-                size: 0,
-                type: 'application/octet-stream'
-              }));
-              setDocuments(docs);
+          } catch (error) {
+            console.error("Error fetching patient settings:", error);
+            if (error.message.includes("User not registered")) {
+              setError("Please register your account first");
+            } else {
+              setError("Error loading patient settings. Please try again.");
             }
-          } else {
-            const errorMsg = ipfsResult.error || "Unknown error";
-            console.error("IPFS fetch failed:", errorMsg);
-            setError(`Failed to fetch patient data: ${errorMsg}`);
           }
         }
       } catch (err) {
@@ -103,7 +111,7 @@ const Settings = () => {
     };
 
     loadSettings();
-  }, [account]);
+  }, [account, checkPatientSettings]);
 
   const handleDocumentsUpdate = (newDocs) => {
     setDocuments(prevDocs => {
@@ -140,6 +148,7 @@ const Settings = () => {
         <div className={styles.sidebarContainer}>
           <DocumentSidebar 
             documents={documents}
+            patientData={formData}
             onSelectDocument={setSelectedDocument}
             loading={loading}
             error={error}
@@ -151,11 +160,12 @@ const Settings = () => {
             <div className={styles.error}>
               <p>{error}</p>
             </div>
-          )}              <PatientSettingsForm 
-                onDocumentsUpdate={handleDocumentsUpdate}
-                initialDocuments={documents}
-                initialFormData={formData}  /* If formData is empty, the form displays empty fields */
-              />
+          )}
+          <PatientSettingsForm 
+            onDocumentsUpdate={handleDocumentsUpdate}
+            initialDocuments={documents}
+            initialFormData={formData}
+          />
         </div>
       </div>
     </div>
