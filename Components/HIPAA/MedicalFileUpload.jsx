@@ -72,7 +72,7 @@ const MedicalFileUpload = ({ onUpload }) => {
       if (hashInput === verifyHash) {
         setShowEncryptionKey(true);
         setError('');
-        alert('Hash verified successfully!');
+        alert('Hash key verified successfully! You can now decrypt your files.');
       } else {
         setError('Invalid hash key. Please try again.');
         setShowEncryptionKey(false);
@@ -139,6 +139,7 @@ const MedicalFileUpload = ({ onUpload }) => {
         });
         setProgress(75 + (i / files.length) * 25);
       }
+      alert("File(s) uploaded successfully!");
       setUploadedFiles(uploadedFilesArray);
       if (onUpload) {
         await onUpload(uploadedFilesArray);
@@ -202,6 +203,7 @@ const MedicalFileUpload = ({ onUpload }) => {
       }
       
       if (decryptedArray.length > 0) {
+        alert("File(s) decrypted successfully!");
         setDecryptedFiles(decryptedArray);
       }
     } catch (err) {

@@ -106,6 +106,5 @@ Phase 6 : Hashing Algorithm & Decrypt Key
   - Giving Successfull Verification Of Hash Key
   - Chating Media Upload To IPFS Pinata Perfectly And Show That File On Chat As Well. 
 
-Conclusion
 ----------
 By implementing these enhancements, De-Chat will evolve into a robust, decentralized communication platform that is well-suited for the healthcare industry. The platform will afford healthcare professionals and patients a trusted means of communication that not only secures and encrypts data but also actively monitors for compliance with HIPAA and other privacy standards. This plan ensures that the future of De-Chat is both innovative and responsible, paving the way for secure, intelligent, and compliant healthcare communication.

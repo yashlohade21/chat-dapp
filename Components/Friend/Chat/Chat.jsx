@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 
-//INTERNAL IMPORT
+// INTERNAL IMPORTS
 import Style from "./Chat.module.css";
 import images from "../../../assets";
 import { converTime } from "../../../Utils/apiFeature";
 import { Loader } from "../../index";
+// NEW: Import IPFSService for file uploads in chat
+import { IPFSService } from "../../../Utils/IPFSService";
 
 const Chat = ({
   functionName,
@@ -19,7 +21,7 @@ const Chat = ({
   currentUserAddress,
   readUser,
 }) => {
-  //USTE STATE
+  // US STATE
   const [message, setMessage] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [sentiment, setSentiment] = useState(null);
@@ -43,6 +45,15 @@ const Chat = ({
     }
   }, []);
 
+  const handleSendMessage = () => {
+    if (!message.trim()) return;
+    functionName({
+      msg: message,
+      address: router.query.address,
+    });
+    setMessage(""); // Clear input after sending
+  };
+
   return (
     <div className={Style.Chat}>
       {currentUserName && currentUserAddress ? (
@@ -61,7 +72,7 @@ const Chat = ({
         <div className={Style.Chat_box}>
           <div className={Style.Chat_box_left}>
             {friendMsg.map((el, i) => (
-              <div>
+              <div key={i}>
                 {el.sender == chatData.address ? (
                   <div className={Style.Chat_box_left_title}>
                     <Image
@@ -71,8 +82,7 @@ const Chat = ({
                       height={50}
                     />
                     <span>
-                      {chatData.name} {""}
-                      <small>Time: {converTime(el.timestamp)}</small>
+                      {chatData.name} <small>Time: {converTime(el.timestamp)}</small>
                     </span>
                   </div>
                 ) : (
@@ -84,12 +94,11 @@ const Chat = ({
                       height={50}
                     />
                     <span>
-                      {userName} {""}
-                      <small>Time: {converTime(el.timestamp)}</small>
+                      {userName} <small>Time: {converTime(el.timestamp)}</small>
                     </span>
                   </div>
                 )}
-                <p key={i + 1}>
+                <p>
                   {el.msg.startsWith('[FILE]') ? (
                     (() => {
                       const [name, data] = el.msg.slice(6).split('|');
@@ -97,7 +106,11 @@ const Chat = ({
                       const isPDF = name.match(/\.pdf$/i);
                       
                       return isImage ? (
-                        <img src={data} alt={name} style={{maxWidth: '200px'}} />
+                        <img 
+                          src={data} 
+                          alt={name} 
+                          style={{maxWidth: '200px'}} 
+                        />
                       ) : isPDF ? (
                         <a href={data} download={name}>Download PDF: {name}</a>
                       ) : (
@@ -144,31 +157,7 @@ const Chat = ({
                 </div>
               )}
               <div className={Style.file_upload}>
-                <input
-                  type="file"
-                  id="file"
-                  className={Style.file_input}
-                  onChange={async (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      // Convert file to IPFS-compatible format
-                      const reader = new FileReader();
-                      reader.onloadend = async () => {
-                        try {
-                          const msg = `[FILE]${file.name}|${reader.result}`;
-                          functionName({
-                            msg,
-                            address: router.query.address,
-                          });
-                        } catch (error) {
-                          console.error("Error uploading file:", error);
-                        }
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                />
-                <div className={Style.file_upload}>
+                {/* NEW: File upload input using IPFS; on successful upload, alert the user */}
                 <input
                   type="file"
                   id="file"
@@ -181,16 +170,22 @@ const Chat = ({
                         alert('File size should be less than 5MB');
                         return;
                       }
-                      
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        const msg = `[FILE]${file.name}|${reader.result}`;
+                      try {
+                        const result = await IPFSService.uploadFile(file);
+                        if (!result.success) {
+                          alert("Error uploading file: " + result.error);
+                          return;
+                        }
+                        const msg = `[FILE]${file.name}|${result.url}`;
                         functionName({
                           msg,
                           address: router.query.address,
                         });
-                      };
-                      reader.readAsDataURL(file);
+                        alert("File uploaded successfully!");
+                      } catch (error) {
+                        console.error("Error uploading file:", error);
+                        alert("Error uploading file.");
+                      }
                     }
                   }}
                 />
@@ -198,8 +193,7 @@ const Chat = ({
                   <Image src={images.file} alt="file" width={50} height={50} style={{cursor: 'pointer'}} />
                 </label>
               </div>
-              </div>
-              {loading == true ? (
+              {loading ? (
                 <Loader />
               ) : (
                 <Image
@@ -207,12 +201,7 @@ const Chat = ({
                   alt="file"
                   width={50}
                   height={50}
-                  onClick={() =>
-                    functionName({
-                      msg: message,
-                      address: router.query.address,
-                    })
-                  }
+                  onClick={handleSendMessage}
                 />
               )}
             </div>
