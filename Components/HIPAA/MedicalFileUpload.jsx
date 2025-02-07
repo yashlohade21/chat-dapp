@@ -273,7 +273,7 @@ const MedicalFileUpload = ({ onUpload }) => {
 
       <div className={styles.hashSection}>
         <h4>Verify Your Hash Key</h4>
-        <form onSubmit={handleHashSubmit} className={styles.hashForm}>
+        <div className={styles.hashForm}>
           <input
             type="text"
             value={hashInput}
@@ -281,10 +281,16 @@ const MedicalFileUpload = ({ onUpload }) => {
             placeholder="Enter your hash key"
             className={styles.hashInput}
           />
-          <button type="submit" className={styles.verifyButton}>
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              handleHashSubmit(e);
+            }} 
+            className={styles.verifyButton}
+          >
             Verify Hash
           </button>
-        </form>
+        </div>
       </div>
 
       {showEncryptionKey && patientKeys && (
