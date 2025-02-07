@@ -4,6 +4,35 @@ import { box, randomBytes } from 'tweetnacl';
 import { encodeBase64, decodeBase64 } from 'tweetnacl-util';
 
 export const CryptoService = {
+  // Helper functions moved to top for clarity
+  arrayBufferToBase64: (buffer) => {
+    try {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    } catch (error) {
+      console.error('Error converting ArrayBuffer to Base64:', error);
+      throw new Error('Failed to convert file data');
+    }
+  },
+
+  base64ToArrayBuffer: (base64) => {
+    try {
+      const binaryString = window.atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    } catch (error) {
+      console.error('Error converting Base64 to ArrayBuffer:', error);
+      throw new Error('Failed to convert file data');
+    }
+  },
+
   // Generate a symmetric key for message encryption
   generateMessageKey: () => {
     try {
@@ -39,21 +68,13 @@ export const CryptoService = {
 
   // Encrypt message using AES
   encryptMessage: (message, key) => {
-    let input;
-    if (typeof message === "string") {
-      input = message;
-    } else if (message instanceof Uint8Array) {
-      input = CryptoJS.lib.WordArray.create(message);
-    } else {
-      input = message;
-    }
-    return CryptoJS.AES.encrypt(input, key).toString();
+    return CryptoJS.AES.encrypt(message, key).toString();
   },
 
   // Decrypt message using AES
   decryptMessage: (encryptedMessage, key) => {
     const bytes = CryptoJS.AES.decrypt(encryptedMessage, key);
-    return bytes.toString(CryptoJS.enc.Utf8);
+    return bytes.toString(CryptoJS.enc.Base64);
   },
 
   // Sign message using user's Ethereum private key
@@ -80,36 +101,73 @@ export const CryptoService = {
 
   // Encrypt message using recipient's public key
   encryptAsymmetric: (message, recipientPublicKey, senderPrivateKey) => {
-    const ephemeralKeyPair = box.keyPair();
-    const sharedKey = box.before(
-      decodeBase64(recipientPublicKey),
-      decodeBase64(senderPrivateKey)
-    );
-    const nonce = randomBytes(box.nonceLength);
-    const messageUint8 = new TextEncoder().encode(message);
-    const encryptedMessage = box.after(messageUint8, nonce, sharedKey);
-    
-    return {
-      encrypted: encodeBase64(encryptedMessage),
-      nonce: encodeBase64(nonce)
-    };
+    try {
+      // Convert message to Uint8Array if it's a string
+      const messageUint8 = typeof message === 'string' 
+        ? new TextEncoder().encode(message)
+        : message;
+
+      const sharedKey = box.before(
+        decodeBase64(recipientPublicKey),
+        decodeBase64(senderPrivateKey)
+      );
+
+      if (!sharedKey) {
+        throw new Error('Failed to generate shared key');
+      }
+
+      const nonce = randomBytes(box.nonceLength);
+      const encryptedMessage = box.after(messageUint8, nonce, sharedKey);
+      
+      if (!encryptedMessage) {
+        throw new Error('Encryption failed');
+      }
+
+      return {
+        encrypted: encodeBase64(encryptedMessage),
+        nonce: encodeBase64(nonce)
+      };
+    } catch (error) {
+      console.error('Encryption error:', error);
+      throw new Error(`Failed to encrypt message: ${error.message}`);
+    }
   },
 
   // Decrypt message using recipient's private key
   decryptAsymmetric: (encryptedData, senderPublicKey, recipientPrivateKey) => {
-    const sharedKey = box.before(
-      decodeBase64(senderPublicKey),
-      decodeBase64(recipientPrivateKey)
-    );
-    const decryptedMessage = box.open.after(
-      decodeBase64(encryptedData.encrypted),
-      decodeBase64(encryptedData.nonce),
-      sharedKey
-    );
-    if (!decryptedMessage) {
-      throw new Error('Failed to decrypt message');
+    try {
+      if (!encryptedData || !encryptedData.encrypted || !encryptedData.nonce) {
+        throw new Error('Invalid encrypted data format');
+      }
+
+      if (!senderPublicKey || !recipientPrivateKey) {
+        throw new Error('Missing required keys');
+      }
+
+      const sharedKey = box.before(
+        decodeBase64(senderPublicKey),
+        decodeBase64(recipientPrivateKey)
+      );
+
+      if (!sharedKey) {
+        throw new Error('Failed to generate shared key');
+      }
+
+      const decryptedMessage = box.open.after(
+        decodeBase64(encryptedData.encrypted),
+        decodeBase64(encryptedData.nonce),
+        sharedKey
+      );
+
+      if (!decryptedMessage) {
+        throw new Error('Failed to decrypt message - possible key mismatch');
+      }
+
+      return new TextDecoder().decode(decryptedMessage);
+    } catch (error) {
+      console.error('Decryption error:', error);
+      throw new Error(`Failed to decrypt message: ${error.message}`);
     }
-    return new TextDecoder().decode(decryptedMessage);
   },
 
   // Generate audit log entry
@@ -254,41 +312,42 @@ export const CryptoService = {
   // Encrypt file with patient's public key and hash
   encryptFileWithPatientKey: async (fileData) => {
     try {
-      const { publicKey } = CryptoService.getPatientKeys();
+      const { publicKey, privateKey } = CryptoService.getPatientKeys();
       
       // Generate a unique symmetric key for this file
       const symmetricKey = await CryptoService.generateMessageKey();
       
-      // Encrypt file with symmetric key
-      const wordArray = CryptoJS.lib.WordArray.create(fileData);
-      const encryptedData = CryptoService.encryptMessage(wordArray, symmetricKey);
+      // Convert ArrayBuffer to Base64 string
+      const base64Data = CryptoService.arrayBufferToBase64(fileData);
       
-      // Encrypt symmetric key with patient's public key
-      const encryptedKey = CryptoService.encryptAsymmetric(
+      // Encrypt file data with symmetric key
+      const encryptedData = CryptoService.encryptMessage(base64Data, symmetricKey);
+      
+      // Encrypt symmetric key
+      const encryptedKeyObj = CryptoService.encryptAsymmetric(
         symmetricKey,
         publicKey,
-        publicKey // In this case, sender and recipient are the same (patient)
+        privateKey
       );
       
-      // Generate hash of encrypted data
       const hash = CryptoJS.SHA256(encryptedData).toString();
       
       return {
         encryptedData,
-        encryptedKey,
+        encryptedKey: encryptedKeyObj,
         hash,
         timestamp: Date.now()
       };
     } catch (error) {
       console.error('Error encrypting file with patient key:', error);
-      throw new Error('File encryption failed');
+      throw new Error('File encryption failed: ' + error.message);
     }
   },
 
   // Decrypt file with patient's private key and verify hash
   decryptFileWithPatientKey: async (encryptedData, encryptedKey, expectedHash) => {
     try {
-      // First verify the hash
+      // Verify hash
       const currentHash = CryptoJS.SHA256(encryptedData).toString();
       if (currentHash !== expectedHash) {
         throw new Error('File integrity check failed: Hash mismatch');
@@ -296,20 +355,34 @@ export const CryptoService = {
       
       const { privateKey, publicKey } = CryptoService.getPatientKeys();
       
-      // Decrypt the symmetric key
-      const symmetricKey = CryptoService.decryptAsymmetric(
-        encryptedKey,
-        publicKey, // In this case, sender and recipient are the same (patient)
-        privateKey
-      );
-      
-      // Decrypt the file data
-      const decrypted = CryptoService.decryptMessage(encryptedData, symmetricKey);
-      const wordArray = CryptoJS.enc.Base64.parse(decrypted);
-      
-      return wordArray.toString(CryptoJS.enc.Utf8);
+      if (!privateKey || !publicKey) {
+        throw new Error('Missing encryption keys');
+      }
+
+      try {
+        // Decrypt the symmetric key
+        const symmetricKey = CryptoService.decryptAsymmetric(
+          encryptedKey,
+          publicKey,
+          privateKey
+        );
+
+        if (!symmetricKey) {
+          throw new Error('Failed to decrypt symmetric key');
+        }
+
+        // Decrypt the file data
+        const decryptedBase64 = CryptoService.decryptMessage(encryptedData, symmetricKey);
+        
+        // Convert back to binary data
+        return decryptedBase64;
+
+      } catch (decryptError) {
+        console.error('Decryption error details:', decryptError);
+        throw new Error(`Decryption failed: ${decryptError.message}`);
+      }
     } catch (error) {
-      console.error('Error decrypting file with patient key:', error);
+      console.error('Error in decryptFileWithPatientKey:', error);
       throw error;
     }
   },

@@ -157,6 +157,58 @@ const MedicalFileUpload = ({ onUpload }) => {
     }
   };
 
+  const renderDecryptedFile = (file) => {
+    try {
+      if (file.type.startsWith('image/')) {
+        return (
+          <img 
+            src={`data:${file.type};base64,${file.content}`} 
+            alt={file.name} 
+            className={styles.decryptedImage}
+          />
+        );
+      } else if (file.type === 'application/pdf') {
+        return (
+          <object 
+            data={`data:${file.type};base64,${file.content}`}
+            type="application/pdf"
+            className={styles.decryptedPdf}
+          >
+            <p>PDF preview not available. <a href={`data:${file.type};base64,${file.content}`} download={file.name}>Download PDF</a></p>
+          </object>
+        );
+      } else {
+        return (
+          <div className={styles.decryptedFile}>
+            <p>File type: {file.type}</p>
+            <a 
+              href={`data:${file.type};base64,${file.content}`}
+              download={file.name}
+              className={styles.downloadLink}
+            >
+              Download {file.name}
+            </a>
+          </div>
+        );
+      }
+    } catch (error) {
+      console.error('Error rendering file:', error);
+      return (
+        <div className={styles.error}>
+          Error displaying file: {file.name}
+          <br />
+          <a 
+            href={`data:${file.type};base64,${file.content}`}
+            download={file.name}
+            className={styles.downloadLink}
+          >
+            Download file instead
+          </a>
+        </div>
+      );
+    }
+  };
+
   const handleDecryptFiles = async () => {
     if (!showEncryptionKey) {
       setError('Please verify your hash key first');
@@ -335,21 +387,7 @@ const MedicalFileUpload = ({ onUpload }) => {
               <li key={file.cid} className={styles.decryptedFile}>
                 <h5>{file.name}</h5>
                 <div className={styles.fileContent}>
-                  {file.type.startsWith('image') ? (
-                    <img 
-                      src={`data:${file.type};base64,${file.content}`} 
-                      alt={file.name} 
-                      className={styles.decryptedImage}
-                    />
-                  ) : file.type === 'application/pdf' ? (
-                    <iframe 
-                      title={file.name} 
-                      src={`data:${file.type};base64,${file.content}`} 
-                      className={styles.decryptedPdf}
-                    />
-                  ) : (
-                    <pre className={styles.decryptedText}>{file.content}</pre>
-                  )}
+                  {renderDecryptedFile(file)}
                 </div>
               </li>
             ))}
