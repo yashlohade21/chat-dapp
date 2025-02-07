@@ -37,8 +37,19 @@ const NavBar = () => {
   const [open, setOpen] = useState(false);
   const [openModel, setOpenModel] = useState(false);
 
-  const { account, userName, connectWallet, createAccount, error } =
-    useContext(ChatAppContect);
+  const { account, userName, connectWallet, createAccount, error } = useContext(ChatAppContect);
+
+  useEffect(() => {
+    if (account) {
+      const pendingAccount = localStorage.getItem('pendingAccount');
+      if (pendingAccount) {
+        const { name, category } = JSON.parse(pendingAccount);
+        createAccount({ name, category });
+        localStorage.removeItem('pendingAccount');
+      }
+    }
+  }, [account]);
+
   return (
     <div className={Style.NavBar}>
       <div className={Style.NavBar_box}>
@@ -46,7 +57,6 @@ const NavBar = () => {
           <Image src={images.logo} alt="logo" width={50} height={50} />
         </div>
         <div className={Style.NavBar_box_right}>
-          {/* //DESKTOP */}
           <div className={Style.NavBar_box_right_menu}>
             {menuItems.map((el, i) => (
               <div
@@ -66,75 +76,39 @@ const NavBar = () => {
             ))}
           </div>
 
-          {/* //MOBILE */}
-          {open && (
-            <div className={Style.mobile_menu}>
-              {menuItems.map((el, i) => (
-                <div
-                  onClick={() => setActive(i + 1)}
-                  key={i + 1}
-                  className={`${Style.mobile_menu_items} ${
-                    active == i + 1 ? Style.active_btn : ""
-                  }`}
-                >
-                  <Link className={Style.mobile_menu_items_link} href={el.link}>
-                    {el.menu}
-                  </Link>
-                </div>
-              ))}
-
-              <p className={Style.mobile_menu_btn}>
-                <Image
-                  src={images.close}
-                  alt="close"
-                  width={50}
-                  height={50}
-                  onClick={() => setOpen(false)}
-                />
-              </p>
-            </div>
-          )}
-
-          {/* CONNECT WALLET */}
-          <div className={Style.NavBar_box_right_connect}>
-            {account == "" ? (
-              <button onClick={() => connectWallet()}>
-                {""}
-                <span>Connect Wallet</span>
+          <div className={Style.NavBar_box_right_buttons}>
+            {!userName && (
+              <button 
+                onClick={() => setOpenModel(true)}
+                className={Style.createAccountBtn}
+              >
+                Create Account
               </button>
-            ) : (
-              <button onClick={() => setOpenModel(true)}>
-                {""}
+            )}
+            
+            {account ? (
+              <button className={Style.connectedWalletBtn}>
                 <Image
                   src={userName ? images.accountName : images.create2}
                   alt="Account image"
                   width={20}
                   height={20}
                 />
-                {""}
-                <small>{userName || "Create Account"}</small>
+                <small>{userName || account.slice(0, 6)}...</small>
               </button>
-            )}
-          </div>
-
-          <div
-            className={Style.NavBar_box_right_open}
-            onClick={() => setOpen(true)}
-          >
-            <Image src={images.open} alt="open" width={30} height={30} />
+            ) : null}
           </div>
         </div>
       </div>
 
-      {/* MODEL COMPONENT */}
       {openModel && (
         <div className={Style.modelBox}>
           <Model
             openBox={setOpenModel}
-            title="WELCOME TO"
+            title="Welcome to"
             head="De-Chat"
-            info="Fuzzy-Enhanced Secured De-Centralized Messaging App For Smart Healthcare System"
-            smallInfo="Kindly select your name..."
+            info="Secure Decentralized Healthcare Messaging"
+            smallInfo="Enter your details to get started..."
             image={images.hero}
             functionName={createAccount}
             address={account}

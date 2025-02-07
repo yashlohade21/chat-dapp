@@ -84,22 +84,52 @@ export const ChatAppProvider = ({ children }) => {
   };
 
   //CREATE ACCOUNT
-  const createAccount = async ({ name }) => {
-    console.log(name, account);
+  const createAccount = async ({ name, category }) => {
     try {
-      if (!name || !account)
-        return setError("Name And Account Address, cannot be empty");
+      if (!name || !account) {
+        return setError("Name And Account Address cannot be empty");
+      }
 
       const contract = await connectingWithContract();
-      console.log(contract);
-      const getCreatedUser = await contract.createAccount(name);
+      const getCreatedUser = await contract.createAccount(name, category);
 
       setLoading(true);
       await getCreatedUser.wait();
       setLoading(false);
+      
+      // Store user type in localStorage for future reference
+      localStorage.setItem('userCategory', category);
+      
       window.location.reload();
     } catch (error) {
-      setError("Error while creating your account Pleas reload browser");
+      console.error("Error creating account:", error);
+      setError("Error while creating your account. Please reload browser");
+    }
+  };
+
+  // Add function to check user category
+  const getUserCategory = async (address) => {
+    try {
+      const contract = await connectingWithContract();
+      if (!contract) return null;
+      
+      // First try to get from localStorage for quick access
+      const storedCategory = localStorage.getItem('userCategory');
+      if (storedCategory !== null) {
+        return storedCategory;
+      }
+
+      // If not in localStorage, get from contract
+      const user = await contract.getUserInfo(address);
+      if (user && user.category !== undefined) {
+        localStorage.setItem('userCategory', user.category.toString());
+        return user.category.toString();
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error getting user category:", error);
+      return null;
     }
   };
 
@@ -203,6 +233,7 @@ export const ChatAppProvider = ({ children }) => {
       value={{
         readMessage,
         createAccount,
+        getUserCategory,
         addFriends,
         sendMessage,
         readUser,

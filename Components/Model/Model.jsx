@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import Image from "next/image";
 
 //INTERNAL IMPORT
@@ -9,23 +9,60 @@ import { Loader } from "../../Components/index";
 
 const Model = ({ openBox, title, address, head, info, smallInfo, image, functionName }) => {
   const [name, setName] = useState("");
-  const [userAddress, setUserAddress] = useState(address);
-  // New state for category: default to "0" (Patient)
   const [category, setCategory] = useState("0");
+  const { loading, connectWallet } = useContext(ChatAppContect);
 
-  const { loading } = useContext(ChatAppContect);
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      alert("Please enter your name");
+      return;
+    }
+
+    if (!address) {
+      // Store form data temporarily
+      localStorage.setItem('pendingAccount', JSON.stringify({ name, category }));
+      // Close modal
+      openBox(false);
+      // Connect wallet
+      await connectWallet();
+      return;
+    }
+
+    functionName({ 
+      name, 
+      category 
+    });
+  };
+
+  // Load pending account data if exists
+  useEffect(() => {
+    const pendingAccount = localStorage.getItem('pendingAccount');
+    if (pendingAccount) {
+      const { name: savedName, category: savedCategory } = JSON.parse(pendingAccount);
+      setName(savedName);
+      setCategory(savedCategory);
+    }
+  }, []);
+
   return (
     <div className={Style.Model}>
       <div className={Style.Model_box}>
         <div className={Style.Model_box_left}>
-          <Image src={image} alt="buddy" width={700} height={700} />
+          <Image 
+            src={image} 
+            alt="buddy" 
+            width={500} 
+            height={500} 
+            priority
+            quality={100}
+          />
         </div>
         <div className={Style.Model_box_right}>
           <h1>
             {title} <span>{head}</span>
           </h1>
           <p>{info}</p>
-          <small>{smallInfo}</small>
+          <small>{!address ? "Fill in your details and connect wallet to create account" : smallInfo}</small>
 
           {loading === true ? (
             <Loader />
@@ -35,47 +72,50 @@ const Model = ({ openBox, title, address, head, info, smallInfo, image, function
                 <Image
                   src={images.username}
                   alt="user"
-                  width={30}
-                  height={30}
+                  width={24}
+                  height={24}
                 />
                 <input
                   type="text"
-                  placeholder="Your name"
+                  placeholder="Enter your name"
                   onChange={(e) => setName(e.target.value)}
+                  value={name}
+                  required
                 />
               </div>
+              
               <div className={Style.Model_box_right_name_info}>
-                <Image src={images.account} alt="address" width={30} height={30} />
-                <input
-                  type="text"
-                  placeholder={address || "Enter address.."}
-                  onChange={(e) => setUserAddress(e.target.value)}
+                <Image 
+                  src={images.account} 
+                  alt="category" 
+                  width={24} 
+                  height={24} 
                 />
-              </div>
-              {/* Category Selection */}
-              <div className={Style.Model_box_right_name_info}>
-                <Image src={images.account} alt="category" width={30} height={30} />
                 <select 
                   onChange={(e) => setCategory(e.target.value)} 
-                  defaultValue="0"
+                  value={category}
                   className={Style.Model_box_right_name_select}
                   required
-                  aria-label="Select account type"
                 >
-                  <option value="" disabled>Select account type</option>
                   <option value="0">Patient</option>
                   <option value="1">Doctor</option>
                 </select>
               </div>
 
+              {!address && (
+                <p className={Style.Model_box_right_name_info}>
+                  👉 After filling details, click continue to connect wallet
+                </p>
+              )}
+
               <div className={Style.Model_box_right_name_btn}>
-                <button onClick={() => functionName({ name, userAddress, category })}>
-                  <Image src={images.send} alt="send" width={30} height={30} />
-                  Submit
+                <button onClick={handleSubmit}>
+                  <Image src={images.send} alt="send" width={24} height={24} />
+                  {!address ? 'Continue & Connect Wallet' : 'Create Account'}
                 </button>
 
                 <button onClick={() => openBox(false)}>
-                  <Image src={images.close} alt="close" width={30} height={30} />
+                  <Image src={images.close} alt="close" width={24} height={24} />
                   Cancel
                 </button>
               </div>
