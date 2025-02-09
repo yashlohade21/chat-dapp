@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import styles from "./PatientDataForm.module.css";
 import MedicalFileUpload from "../HIPAA/MedicalFileUpload";
+import { ChatAppContect } from "../../Context/ChatAppContext";
 
 // This component collects patient medical information.
 // All data will be encrypted before it is stored, so that sensitive data remains private.
@@ -170,7 +171,7 @@ const PatientDataForm = ({ onSubmit, initialFormData = {}, onDocumentsUpdate, in
         </div>
         <div className={styles.formGroup}>
           <label>Upload Medical Documents</label>
-          <MedicalFileUpload onUpload={handleFileUpload} />
+          <MedicalFileUpload onUpload={handleFileUpload} account={account} />
         </div>
         <div className={styles.formGroup}>
           <button type="submit" disabled={loading}>
@@ -181,5 +182,5 @@ const PatientDataForm = ({ onSubmit, initialFormData = {}, onDocumentsUpdate, in
     </div>
   );
 };
-}
+
 export default PatientDataForm;

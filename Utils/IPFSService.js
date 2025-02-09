@@ -185,7 +185,7 @@ export const IPFSService = {
   },
 
   // New: Get JSON from IPFS – for retrieving patient data
-  getJSON: async (cid, retries = 3) => {
+  getJSON: async (cid, retries = 3, delay = 1000) => {
     let lastError = null;
     for (let i = 0; i < retries; i++) {
       try {
@@ -202,7 +202,7 @@ export const IPFSService = {
         console.error(`IPFS JSON fetch attempt ${i + 1} failed:`, error);
         lastError = error;
         if (i < retries - 1) {
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+          await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
         }
       }
     }

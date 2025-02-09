@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.17;
 
 contract ChatApp {
     // User struct to store user information
@@ -23,12 +23,12 @@ contract ChatApp {
         string msg;
     }
 
-    // Patient settings struct
-    struct PatientSettings {
-        string patientDataCID;
-        string[] documentCIDs;
+    // Patient data struct with version tracking
+    struct PatientData {
+        string encryptedDataCID;
         uint256 lastUpdated;
-        mapping(address => bool) authorizedProviders;
+        uint256 version;
+        bool exists;
     }
 
     // Mapping of user addresses to User structs
@@ -37,16 +37,14 @@ contract ChatApp {
     // Mapping for messages between two users
     mapping(bytes32 => Message[]) private messages;
 
-    // Mapping for patient settings
-    mapping(address => PatientSettings) private patientSettings;
+    // Mapping to store patient data
+    mapping(address => PatientData) private patientData;
 
     // Events
     event UserCreated(address indexed user, string name, string accountType);
     event FriendAdded(address indexed user, address indexed friend);
     event MessageSent(bytes32 indexed messageId, address indexed sender, address indexed receiver);
-    event DocumentUploaded(address indexed patient, string cid, uint256 timestamp);
-    event ConsentGranted(address indexed patient, address indexed provider);
-    event ConsentRevoked(address indexed patient, address indexed provider);
+    event PatientDataUpdated(address indexed patient, string dataCID, uint256 timestamp);
 
     // Modifiers
     modifier userExists(address user) {
@@ -54,8 +52,15 @@ contract ChatApp {
         _;
     }
 
+    modifier onlyPatient() {
+        require(users[msg.sender].exists, "User does not exist");
+        require(keccak256(bytes(users[msg.sender].accountType)) == keccak256(bytes("0")), "Not a patient");
+        _;
+    }
+
+    // Modifier to check if users are not already friends
     modifier notFriends(address friend) {
-        require(!checkAlreadyFriends(msg.sender, friend), "Already friends");
+        require(!checkAlreadyFriends(msg.sender, friend), "You are already friends");
         _;
     }
 
@@ -86,7 +91,12 @@ contract ChatApp {
     }
 
     // Add a friend
-    function addFriend(address friend, string calldata name) external userExists(msg.sender) userExists(friend) notFriends(friend) {
+    function addFriend(address friend, string calldata name) 
+        external 
+        userExists(msg.sender) 
+        userExists(friend) 
+        notFriends(friend) 
+    {
         require(friend != msg.sender, "Cannot add self as friend");
         
         users[msg.sender].friendList.push(Friend(friend, name));
@@ -153,47 +163,20 @@ contract ChatApp {
         return users[pubkey].exists;
     }
 
-    // Add a document CID to a patient's settings
-    function addDocumentCID(string calldata cid) external userExists(msg.sender) {
-        require(bytes(cid).length > 0, "Invalid CID");
-        patientSettings[msg.sender].documentCIDs.push(cid);
-        emit DocumentUploaded(msg.sender, cid, block.timestamp);
+    // Update patient data with version tracking
+    function updatePatientData(string memory encryptedDataCID) external onlyPatient {
+        PatientData storage data = patientData[msg.sender];
+        data.encryptedDataCID = encryptedDataCID;
+        data.lastUpdated = block.timestamp;
+        data.version = data.exists ? data.version + 1 : 1;
+        data.exists = true;
+
+        emit PatientDataUpdated(msg.sender, encryptedDataCID, block.timestamp);
     }
 
-    // Update patient settings
-    function updatePatientSettings(string calldata dataCID, string[] calldata documentCIDs) external userExists(msg.sender) {
-        PatientSettings storage settings = patientSettings[msg.sender];
-        settings.patientDataCID = dataCID;
-        settings.documentCIDs = documentCIDs;
-        settings.lastUpdated = block.timestamp;
-    }
-
-    // Get patient settings
-    function getPatientSettings(address patient) external view userExists(patient) returns(string memory, string[] memory, uint256) {
-        PatientSettings storage settings = patientSettings[patient];
-        return (settings.patientDataCID, settings.documentCIDs, settings.lastUpdated);
-    }
-
-    // Check if patient has settings
-    function hasPatientSettings(address patient) external view returns(bool) {
-        return bytes(patientSettings[patient].patientDataCID).length > 0;
-    }
-
-    // Grant consent to healthcare provider
-    function grantConsent(address provider) external userExists(msg.sender) userExists(provider) {
-        require(provider != msg.sender, "Cannot grant consent to self");
-        patientSettings[msg.sender].authorizedProviders[provider] = true;
-        emit ConsentGranted(msg.sender, provider);
-    }
-
-    // Revoke consent from healthcare provider
-    function revokeConsent(address provider) external userExists(msg.sender) {
-        patientSettings[msg.sender].authorizedProviders[provider] = false;
-        emit ConsentRevoked(msg.sender, provider);
-    }
-
-    // Check if provider has consent
-    function hasConsent(address patient, address provider) external view returns(bool) {
-        return patientSettings[patient].authorizedProviders[provider];
+    // Get patient data including version
+    function getPatientData(address patient) external view returns (string memory, uint256, uint256, bool) {
+        PatientData memory data = patientData[patient];
+        return (data.encryptedDataCID, data.lastUpdated, data.version, data.exists);
     }
 }

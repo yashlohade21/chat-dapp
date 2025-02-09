@@ -223,6 +223,8 @@ In the modern digital landscape, privacy, security, and control over personal da
   - Use quotes around network names: "polygon_amoy"
   - Avoid trailing commas after network config
   - Keep network name consistent between config and deploy command
+  - Network name must match exactly between hardhat.config.js and constants.js
+  - Avoid hyphens in network names, use underscores instead
 
 ## Windows-Specific Instructions
 - Use `npm install package-name` without additional flags or syntax on Windows

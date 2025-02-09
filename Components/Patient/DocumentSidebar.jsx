@@ -24,7 +24,7 @@ const DocumentSidebar = ({ documents = [], patientData = {}, onSelectDocument, l
     <div className={styles.sidebar}>
       <div className={styles.patientInfo}>
         <h3 className={styles.sidebarTitle}>Patient Information</h3>
-        {patientData.name ? (
+        {patientData && patientData.name ? (
           <div className={styles.infoSection}>
             <p><strong>Name:</strong> <span className={styles.infoText}>{patientData.name}</span></p>
             <p><strong>Email:</strong> <span className={styles.infoText}>{patientData.email}</span></p>
@@ -53,7 +53,7 @@ const DocumentSidebar = ({ documents = [], patientData = {}, onSelectDocument, l
               <li 
                 key={doc.cid}
                 className={styles.documentItem}
-                onClick={() => onSelectDocument(doc)}
+                onClick={() => onSelectDocument?.(doc)}
               >
                 <span className={styles.documentName}>{doc.name}</span>
                 <span className={styles.documentSize}>

@@ -35,6 +35,41 @@
       "artifacts": [
         "ChatApp"
       ]
+    },
+    "C:\\Users\\harsh\\Downloads\\chat-dapp-master\\chat-dapp-master\\contracts\\ChatApp.sol": {
+      "lastModificationDate": 1739026121870,
+      "contentHash": "934ce6ed3f8577639b4cbe14161814f6",
+      "sourceName": "contracts/ChatApp.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.17"
+      ],
+      "artifacts": [
+        "ChatApp"
+      ]
     }
   }
 }

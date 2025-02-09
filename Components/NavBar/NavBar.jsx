@@ -32,23 +32,11 @@ const NavBar = () => {
     },
   ];
 
-  //USESTATE
   const [active, setActive] = useState(2);
   const [open, setOpen] = useState(false);
   const [openModel, setOpenModel] = useState(false);
 
   const { account, userName, connectWallet, createAccount, error } = useContext(ChatAppContect);
-
-  useEffect(() => {
-    if (account) {
-      const pendingAccount = localStorage.getItem('pendingAccount');
-      if (pendingAccount) {
-        const { name, category } = JSON.parse(pendingAccount);
-        createAccount({ name, category });
-        localStorage.removeItem('pendingAccount');
-      }
-    }
-  }, [account]);
 
   return (
     <div className={Style.NavBar}>
@@ -77,16 +65,24 @@ const NavBar = () => {
           </div>
 
           <div className={Style.NavBar_box_right_buttons}>
-            {!userName && (
-              <button 
-                onClick={() => setOpenModel(true)}
-                className={Style.createAccountBtn}
-              >
-                Create Account
-              </button>
-            )}
-            
-            {account ? (
+            {!account ? (
+              <>
+                <button 
+                  onClick={connectWallet}
+                  className={Style.connectWalletBtn}
+                >
+                  <Image src={images.accountName} alt="Account" width={20} height={20} />
+                  Connect Wallet
+                </button>
+                <button 
+                  onClick={() => setOpenModel(true)}
+                  className={Style.createAccountBtn}
+                >
+                  <Image src={images.create2} alt="Create" width={20} height={20} />
+                  Create Account
+                </button>
+              </>
+            ) : (
               <button className={Style.connectedWalletBtn}>
                 <Image
                   src={userName ? images.accountName : images.create2}
@@ -96,7 +92,7 @@ const NavBar = () => {
                 />
                 <small>{userName || account.slice(0, 6)}...</small>
               </button>
-            ) : null}
+            )}
           </div>
         </div>
       </div>
