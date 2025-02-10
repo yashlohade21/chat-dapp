@@ -293,3 +293,116 @@ Cross-Chain Compatibility: De-Chat will eventually expand to work with multiple 
 
 Conclusion
 De-Chat is a pioneering decentralized messaging platform that addresses the privacy and security challenges of modern communication, particularly in healthcare. By utilizing blockchain technology, De-Chat ensures that all communications are secure, transparent, and resistant to censorship. The application’s focus on user privacy, combined with its decentralized architecture and secure smart contracts, makes it an ideal solution for industries that demand confidentiality and data integrity. With continued development and future enhancements, De-Chat has the potential to revolutionize secure communication and create new standards for privacy in the digital age.
+
+
+
+
+
+1. **Key Derivation (PBKDF2)**:
+```javascript
+const key = CryptoJS.PBKDF2(passphrase, salt, {
+  keySize: 256/32,  // 256-bit key
+  iterations: 1000  // Number of iterations
+});
+```
+- PBKDF2 (Password-Based Key Derivation Function 2) is used to derive a cryptographic key from the passphrase
+- Uses 1000 iterations for key strengthening
+- Produces a 256-bit key
+- Uses a random salt (128 bits) to prevent rainbow table attacks
+
+2. **Encryption (AES)**:
+```javascript
+const encrypted = CryptoJS.AES.encrypt(wordArray, key.toString());
+```
+- Uses AES (Advanced Encryption Standard) in CBC mode
+- 256-bit key length
+- Includes IV (Initialization Vector) automatically
+- Outputs in Base64 format
+
+3. **Hash Generation (SHA-256)**:
+```javascript
+const passphraseHash = CryptoJS.SHA256(passphrase + salt.toString()).toString();
+```
+- SHA-256 for hash verification
+- Used to verify the correct passphrase without storing it
+- Combines passphrase with salt for additional security
+
+4. **Salt Generation**:
+```javascript
+const salt = CryptoJS.lib.WordArray.random(128/8);
+```
+- 128-bit random salt
+- Generated using CryptoJS's secure random number generator
+- Unique per encryption operation
+
+Here's a detailed flow of the encryption process:
+
+1. File Encryption:
+```javascript
+const encryptFileWithPassphrase = async (fileData, passphrase) => {
+  // Generate random salt
+  const salt = CryptoJS.lib.WordArray.random(128/8);
+
+  // Derive key using PBKDF2
+  const key = CryptoJS.PBKDF2(passphrase, salt, {
+    keySize: 256/32,
+    iterations: 1000
+  });
+
+  // Convert file data to WordArray
+  const wordArray = CryptoJS.enc.Base64.parse(fileData);
+
+  // Encrypt using AES
+  const encrypted = CryptoJS.AES.encrypt(wordArray, key.toString());
+
+  // Generate verification hash
+  const passphraseHash = CryptoJS.SHA256(passphrase + salt.toString()).toString();
+
+  return {
+    success: true,
+    encryptedData: encrypted.toString(),
+    passphraseHash,
+    salt: salt.toString()
+  };
+};
+```
+
+2. File Decryption:
+```javascript
+const decryptFileWithPassphrase = async (encryptedData, passphrase, expectedHash, salt) => {
+  // Verify passphrase using hash
+  const providedHash = CryptoJS.SHA256(passphrase + salt).toString();
+  if (providedHash !== expectedHash) {
+    throw new Error("Invalid decryption key");
+  }
+
+  // Recreate key using PBKDF2
+  const key = CryptoJS.PBKDF2(passphrase, salt, {
+    keySize: 256/32,
+    iterations: 1000
+  });
+
+  // Decrypt data
+  const decrypted = CryptoJS.AES.decrypt(encryptedData, key.toString());
+
+  // Convert to Base64
+  const decryptedBase64 = decrypted.toString(CryptoJS.enc.Base64);
+
+  return { success: true, decryptedData: decryptedBase64 };
+};
+```
+
+Security Features:
+1. **Salt**: Prevents rainbow table attacks and ensures unique encryption even with the same passphrase
+2. **PBKDF2**: Makes brute-force attacks computationally expensive
+3. **Hash Verification**: Allows verification of correct passphrase without storing it
+4. **AES-256**: Industry-standard symmetric encryption
+5. **Secure Random Numbers**: Used for salt generation
+6. **Base64 Encoding**: Safe storage and transmission of binary data
+
+The encryption system provides:
+- End-to-end encryption of files
+- Secure key derivation
+- Verification of decryption keys
+- Protection against common attacks
+- Safe storage of encrypted data on IPFS
