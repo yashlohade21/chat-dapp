@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import CryptoJS from "crypto-js";
+import { ethers } from "ethers";
 
 import {
   ChechIfWalletConnected,
@@ -154,16 +155,79 @@ export const ChatAppProvider = ({ children }) => {
   //SEND MESSAGE TO YOUR FRIEND
   const sendMessage = async ({ msg, address }) => {
     try {
-      if (!msg || !address) return setError("Please Type your Message");
-
+      if (!msg || !address) {
+        throw new Error("Message and recipient address are required");
+      }
+      if (!account) {
+        throw new Error("Please connect your wallet first");
+      }
+      
       const contract = await connectingWithContract();
-      const addMessage = await contract.sendMessage(address, msg);
+      if (!contract) {
+        throw new Error("Failed to connect to contract");
+      }
+      
+      // Check if the recipient exists
+      const userExists = await contract.checkUserExists(address);
+      if (!userExists) {
+        throw new Error("Recipient does not exist");
+      }
+
+      // Validate that the recipient is in your friend list
+      const friendLists = await contract.getMyFriendList();
+      const isFriend = friendLists.some(friend => friend.pubkey.toLowerCase() === address.toLowerCase());
+      if (!isFriend) {
+        throw new Error("You can only send messages to your friends");
+      }
+      
       setLoading(true);
-      await addMessage.wait();
-      setLoading(false);
-      window.location.reload();
+      
+      // Get provider to access current gas price
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const gasPrice = await provider.getGasPrice();
+      
+      // Send message with explicit gas configuration
+      const transaction = await contract.sendMessage(address, msg, {
+        gasLimit: 5000000,
+        gasPrice: gasPrice.mul(125).div(100) // Add 25% to current gas price
+      });
+      
+      // Wait for transaction confirmation, with timeout handling
+      const receipt = await Promise.race([
+        transaction.wait(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Transaction timeout")), 30000)
+        )
+      ]);
+      
+      if (!receipt.status) {
+        throw new Error("Transaction failed");
+      }
+      
+      // Refresh messages after successful send
+      await readMessage(address);
     } catch (error) {
-      setError("Please reload and try again");
+      console.error("Error sending message:", error);
+      let errorMessage = "Failed to send message";
+      
+      if (error.code === -32603) {
+        errorMessage = "Network error. Please check your wallet settings and try again.";
+      } else if (error.message.includes("user rejected")) {
+        errorMessage = "Transaction was rejected by user";
+      } else if (error.message.includes("insufficient funds")) {
+        errorMessage = "Insufficient funds for transaction. Please check your wallet balance.";
+      } else if (error.message.includes("timeout")) {
+        errorMessage = "Transaction timed out. The network may be congested, please try again.";
+      } else if (error.message.includes("nonce")) {
+        errorMessage = "Transaction nonce error. Please reset your wallet or try again.";
+      } else {
+        errorMessage = error.message || errorMessage;
+      }
+      
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -407,3 +471,5 @@ export const ChatAppProvider = ({ children }) => {
     </ChatAppContect.Provider>
   );
 };
+
+export default ChatAppProvider;
