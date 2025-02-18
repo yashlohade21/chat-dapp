@@ -19,15 +19,14 @@ const encryptFileWithPassphrase = async (fileData, passphrase) => {
     let wordArray;
     if (fileData instanceof ArrayBuffer) {
       const uint8Array = new Uint8Array(fileData);
-      const numbers = [...uint8Array];
-      wordArray = CryptoJS.lib.WordArray.create(numbers);
+      wordArray = CryptoJS.lib.WordArray.create(uint8Array);
     } else if (typeof fileData === 'string') {
       wordArray = CryptoJS.enc.Base64.parse(fileData);
     } else {
       throw new Error('Unsupported file data format');
     }
 
-    // Encrypt the WordArray
+    // Important: Use key.toString() consistently in both encryption and decryption
     const encrypted = CryptoJS.AES.encrypt(wordArray, key.toString());
     const passphraseHash = CryptoJS.SHA256(passphrase + salt.toString()).toString();
 
@@ -55,32 +54,32 @@ const decryptFileWithPassphrase = async (encryptedData, passphrase, expectedHash
       throw new Error("Invalid decryption key");
     }
 
-    // Recreate key using PBKDF2
+    // Recreate key using PBKDF2 - use exact same parameters as encryption
     const key = CryptoJS.PBKDF2(passphrase, salt, {
       keySize: 256/32,
       iterations: 1000
     });
 
-    /* 
-      IMPORTANT CHANGE:
-      The encrypted file is stored on IPFS as a Blob (text) and then fetched as an ArrayBuffer.
-      IPFSService.getFile converts it to a base64 string.
-      This means that the encryptedData we receive is a base64-encoded version of the 
-      ciphertext (which was originally produced by CryptoJS.AES.encrypt).
-      We need to decode it (using window.atob) to retrieve the original ciphertext string.
-    */
-    const decodedCiphertext = window.atob(encryptedData);
+    try {
+      // Important: Use key.toString() to match encryption
+      const decrypted = CryptoJS.AES.decrypt(encryptedData, key.toString());
+      
+      // Verify decrypted data
+      if (!decrypted || decrypted.sigBytes <= 0) {
+        throw new Error("Decryption produced invalid data");
+      }
 
-    // Decrypt data using the decoded ciphertext 
-    const decrypted = CryptoJS.AES.decrypt(decodedCiphertext, key);
-    
-    // Convert decrypted data to base64 string so it can be used as a data URI (for images, etc.)
-    const base64String = decrypted.toString(CryptoJS.enc.Base64);
-    if (!base64String) {
-      throw new Error("Decryption failed - invalid key or corrupted data");
+      // Convert to base64
+      const base64String = decrypted.toString(CryptoJS.enc.Base64);
+      if (!base64String) {
+        throw new Error("Failed to convert decrypted data to base64");
+      }
+
+      return { success: true, decryptedData: base64String };
+    } catch (e) {
+      console.error('Decryption operation error:', e);
+      throw new Error('Failed to decrypt data - invalid key or corrupted data');
     }
-
-    return { success: true, decryptedData: base64String };
   } catch (error) {
     console.error("Decryption error:", error);
     return { success: false, error: error.message };
