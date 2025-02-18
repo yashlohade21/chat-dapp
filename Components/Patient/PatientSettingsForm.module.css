@@ -88,8 +88,6 @@
     font-size: 1.5rem;
   }
 }
-  font-size: 0.95rem;
-  letter-spacing: 0.5px;
 
 .formGroup label span {
   color: #ff4444;
@@ -211,4 +209,63 @@
     margin: 1rem;
     padding: 1.5rem;
   }
+}
+
+.hashVerificationSection {
+  background-color: #1a1a1a;
+  padding: 2rem;
+  border-radius: 12px;
+  margin: 2rem auto;
+  max-width: 800px;
+}
+
+.hashInputContainer {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.hashInput {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background-color: #2a2a2a;
+  color: #fff;
+  font-family: monospace;
+}
+
+.hashInput:focus {
+  outline: none;
+  border-color: #f18303;
+  box-shadow: 0 0 0 2px rgba(241, 131, 3, 0.2);
+}
+
+.verifyButton {
+  padding: 0.75rem 1.5rem;
+  background-color: #f18303;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.verifyButton:hover:not(:disabled) {
+  background-color: #d97503;
+  transform: translateY(-1px);
+}
+
+.verifyButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #ff4444;
+  background-color: rgba(255, 68, 68, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
 }

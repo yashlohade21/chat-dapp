@@ -2,62 +2,87 @@ import CryptoJS from 'crypto-js';
 
 const encryptFileWithPassphrase = async (fileData, passphrase) => {
   try {
+    if (!fileData || !passphrase) {
+      throw new Error('Invalid encryption input: data or passphrase is missing');
+    }
+
+    // Generate a random salt
     const salt = CryptoJS.lib.WordArray.random(128/8);
-    
-    // Create key using PBKDF2
+
+    // Derive key using PBKDF2
     const key = CryptoJS.PBKDF2(passphrase, salt, {
       keySize: 256/32,
       iterations: 1000
     });
 
-    // Create WordArray from the base64 string
-    const wordArray = CryptoJS.enc.Base64.parse(fileData);
-    
-    // Encrypt the data
+    // Convert ArrayBuffer to WordArray
+    let wordArray;
+    if (fileData instanceof ArrayBuffer) {
+      const uint8Array = new Uint8Array(fileData);
+      const numbers = [...uint8Array];
+      wordArray = CryptoJS.lib.WordArray.create(numbers);
+    } else if (typeof fileData === 'string') {
+      wordArray = CryptoJS.enc.Base64.parse(fileData);
+    } else {
+      throw new Error('Unsupported file data format');
+    }
+
+    // Encrypt the WordArray
     const encrypted = CryptoJS.AES.encrypt(wordArray, key.toString());
-    const encryptedString = encrypted.toString();
-    
-    // Create hash for verification
     const passphraseHash = CryptoJS.SHA256(passphrase + salt.toString()).toString();
-    
-    return { 
-      success: true, 
-      encryptedData: encryptedString, 
+
+    return {
+      success: true,
+      encryptedData: encrypted.toString(),
       passphraseHash,
       salt: salt.toString()
     };
   } catch (error) {
-    console.error("Error encrypting file:", error);
+    console.error('Encryption error:', error);
     return { success: false, error: error.message };
   }
 };
 
 const decryptFileWithPassphrase = async (encryptedData, passphrase, expectedHash, salt) => {
   try {
-    // Verify passphrase
+    if (!encryptedData || !passphrase || !expectedHash || !salt) {
+      throw new Error('Missing required decryption parameters');
+    }
+
+    // Verify passphrase using hash
     const providedHash = CryptoJS.SHA256(passphrase + salt).toString();
     if (providedHash !== expectedHash) {
       throw new Error("Invalid decryption key");
     }
 
-    // Recreate the same key using PBKDF2
+    // Recreate key using PBKDF2
     const key = CryptoJS.PBKDF2(passphrase, salt, {
       keySize: 256/32,
       iterations: 1000
     });
 
-    // Decrypt the data
-    const decrypted = CryptoJS.AES.decrypt(encryptedData, key.toString());
+    /* 
+      IMPORTANT CHANGE:
+      The encrypted file is stored on IPFS as a Blob (text) and then fetched as an ArrayBuffer.
+      IPFSService.getFile converts it to a base64 string.
+      This means that the encryptedData we receive is a base64-encoded version of the 
+      ciphertext (which was originally produced by CryptoJS.AES.encrypt).
+      We need to decode it (using window.atob) to retrieve the original ciphertext string.
+    */
+    const decodedCiphertext = window.atob(encryptedData);
+
+    // Decrypt data using the decoded ciphertext 
+    const decrypted = CryptoJS.AES.decrypt(decodedCiphertext, key);
     
-    // Convert to Base64
-    const decryptedBase64 = decrypted.toString(CryptoJS.enc.Base64);
-    if (!decryptedBase64) {
+    // Convert decrypted data to base64 string so it can be used as a data URI (for images, etc.)
+    const base64String = decrypted.toString(CryptoJS.enc.Base64);
+    if (!base64String) {
       throw new Error("Decryption failed - invalid key or corrupted data");
     }
 
-    return { success: true, decryptedData: decryptedBase64 };
+    return { success: true, decryptedData: base64String };
   } catch (error) {
-    console.error("Error decrypting file:", error);
+    console.error("Decryption error:", error);
     return { success: false, error: error.message };
   }
 };
@@ -103,7 +128,6 @@ const getPatientKeys = () => {
   }
 };
 
-// Single export statement for all functions
 export {
   encryptFileWithPassphrase,
   decryptFileWithPassphrase,

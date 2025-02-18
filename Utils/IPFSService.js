@@ -92,9 +92,18 @@ export const IPFSService = {
     for (let i = 0; i < retries; i++) {
       try {
         const response = await axios.get(`${PINATA_GATEWAY}${cid}`, {
-          timeout: 10000, // 10 second timeout
-          responseType: 'arraybuffer', // Use arraybuffer for binary data
+          timeout: 15000, // Increased timeout to 15 seconds
+          responseType: 'arraybuffer',
+          headers: {
+            'Accept': '*/*',
+            'Cache-Control': 'no-cache'
+          }
         });
+        
+        // Validate response
+        if (!response.data || response.data.length === 0) {
+          throw new Error('Empty response from IPFS');
+        }
         
         // Convert arraybuffer to base64
         const base64Data = btoa(
@@ -110,6 +119,7 @@ export const IPFSService = {
         console.error(`IPFS fetch attempt ${i + 1} failed:`, error);
         lastError = error;
         if (i < retries - 1) {
+          // Exponential backoff
           await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
         }
       }

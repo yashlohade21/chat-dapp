@@ -3,6 +3,7 @@ import styles from './HIPAACompliance.module.css';
 import { IPFSService } from '../../Utils/IPFSService';
 import { encryptFileWithPassphrase, decryptFileWithPassphrase } from '../../Utils/CryptoService';
 import CryptoJS from 'crypto-js';
+import { documentDetectionService } from '../../Utils/DocumentDetectionService';
 
 const allowedFileTypes = [
   'application/pdf',
@@ -16,6 +17,10 @@ const allowedFileTypes = [
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const arrayBufferToBase64 = (buffer) => {
+  if (!buffer) {
+    console.error('arrayBufferToBase64 received undefined buffer');
+    return null;
+  }
   const bytes = new Uint8Array(buffer);
   let binary = '';
   for (let i = 0; i < bytes.byteLength; i++) {
@@ -109,6 +114,12 @@ const MedicalFileUpload = ({ onUpload, account }) => {
     setError('');
   };
 
+  const detectFakeDocument = (file) => {
+    const requiredKeywords = ["medical", "patient", "report", "hospital", "diagnosis"];
+    const lowerName = file.name.toLowerCase();
+    return !requiredKeywords.some(keyword => lowerName.includes(keyword));
+  };
+
   const handleUpload = async () => {
     if (!files.length || !account) {
       setError(files.length ? 'Please connect your wallet' : 'Please select files');
@@ -128,30 +139,39 @@ const MedicalFileUpload = ({ onUpload, account }) => {
         const file = files[i];
         setProgress((i / files.length) * 25);
 
+        // Read file as ArrayBuffer
         const fileBuffer = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
+          reader.onerror = (err) => reject(err);
           reader.readAsArrayBuffer(file);
         });
 
-        const base64Data = arrayBufferToBase64(fileBuffer);
-        
-        setProgress(25 + (i / files.length) * 25);
-        
-        const { success, encryptedData, passphraseHash, salt, error: encError } = 
-          await encryptFileWithPassphrase(base64Data, randomKey);
-        
-        if (!success) throw new Error(encError || "Encryption failed");
+        if (!fileBuffer) {
+          throw new Error('Failed to read file');
+        }
 
-        const encryptedFile = new File([encryptedData], file.name, { type: file.type });
+        // Encrypt the file data
+        const encryptResult = await encryptFileWithPassphrase(fileBuffer, randomKey);
+        
+        if (!encryptResult.success) {
+          throw new Error(encryptResult.error || "Encryption failed");
+        }
+
+        // Create a Blob from the encrypted data
+        const encryptedBlob = new Blob([encryptResult.encryptedData], { type: file.type });
+        const encryptedFile = new File([encryptedBlob], file.name, { type: file.type });
+
+        // Upload to IPFS
         const result = await IPFSService.uploadFile(encryptedFile);
-        if (!result.success) throw new Error(result.error || 'Upload failed');
+        if (!result.success) {
+          throw new Error(result.error || 'Upload failed');
+        }
 
         const fileMetadata = {
           cid: result.cid,
-          passphraseHash,
-          salt,
+          passphraseHash: encryptResult.passphraseHash,
+          salt: encryptResult.salt,
           name: file.name,
           type: file.type,
           size: file.size,
@@ -186,7 +206,7 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       setShowDecryptionKey(true);
     } catch (err) {
       console.error('Upload error:', err);
-      setError('Error uploading files: ' + err.message);
+      setError('Error uploading files: ' + (err.message || 'Unknown error'));
     } finally {
       setUploading(false);
     }
@@ -207,35 +227,43 @@ const MedicalFileUpload = ({ onUpload, account }) => {
     setError('');
 
     try {
-      console.log('Starting decryption for file:', {
-        name: file.name,
-        type: file.type,
-        hasSalt: !!file.salt,
-        hasHash: !!file.passphraseHash
-      });
-
       const response = await IPFSService.getFile(file.cid);
       if (!response.success) {
         throw new Error(`Failed to fetch file ${file.name} from IPFS`);
       }
 
-      const { success, decryptedData, error: decError } = await decryptFileWithPassphrase(
-        response.data,
-        providedKey,
-        file.passphraseHash,
-        file.salt
-      );
+      // Add retry logic for decryption
+      let decryptionAttempts = 0;
+      const maxAttempts = 3;
+      let decryptionResult;
 
-      if (!success) {
-        console.error('Decryption failed:', decError);
-        throw new Error(decError || "Decryption failed");
+      while (decryptionAttempts < maxAttempts) {
+        decryptionResult = await decryptFileWithPassphrase(
+          response.data,
+          providedKey,
+          file.passphraseHash,
+          file.salt
+        );
+
+        if (decryptionResult.success) {
+          break;
+        }
+
+        decryptionAttempts++;
+        if (decryptionAttempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second between attempts
+        }
+      }
+
+      if (!decryptionResult.success) {
+        throw new Error(decryptionResult.error || "Decryption failed after multiple attempts");
       }
 
       setDecryptedFiles(prev => [...prev, {
         cid: file.cid,
         name: file.name,
         type: file.type,
-        content: decryptedData
+        content: decryptionResult.decryptedData
       }]);
     } catch (err) {
       console.error('Decryption error:', err);

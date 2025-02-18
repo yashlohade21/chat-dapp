@@ -97,6 +97,13 @@ IPFS is used for decentralized file storage:
 - When IPFS upload fails, preserve form data and allow retrying just the failed upload
 - Show specific error messages from Pinata API when available
 
+## File Encryption Best Practices
+- Store encrypted files as 'text/plain' type for consistent handling
+- Use base64 encoding for binary data before encryption
+- Store encryption metadata (salt, hash) separately from encrypted data
+- Clear local storage when encryption format changes
+- Always verify decryption key using hash before attempting decryption
+- Handle binary data conversion consistently throughout the process
 
 In the modern digital landscape, privacy, security, and control over personal data have become more critical than ever. Traditional messaging platforms rely on centralized servers that store user data, creating potential vulnerabilities and concerns related to data ownership, privacy breaches, and censorship. With the growing concerns surrounding data security and privacy, especially in sensitive sectors like healthcare, there is an urgent need for a more secure and private alternative to conventional messaging systems. De-Chat is a decentralized chat application designed to address these challenges by utilizing blockchain technology to create a secure, transparent, and user-controlled communication platform. Specifically tailored for smart healthcare systems, De-Chat offers a platform for confidential communication that ensures the privacy and integrity of messages.
 
@@ -293,10 +300,6 @@ Cross-Chain Compatibility: De-Chat will eventually expand to work with multiple 
 
 Conclusion
 De-Chat is a pioneering decentralized messaging platform that addresses the privacy and security challenges of modern communication, particularly in healthcare. By utilizing blockchain technology, De-Chat ensures that all communications are secure, transparent, and resistant to censorship. The application’s focus on user privacy, combined with its decentralized architecture and secure smart contracts, makes it an ideal solution for industries that demand confidentiality and data integrity. With continued development and future enhancements, De-Chat has the potential to revolutionize secure communication and create new standards for privacy in the digital age.
-
-
-
-
 
 1. **Key Derivation (PBKDF2)**:
 ```javascript
