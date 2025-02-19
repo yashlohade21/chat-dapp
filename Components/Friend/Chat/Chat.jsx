@@ -1,16 +1,151 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, memo, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend
+} from 'recharts';
 
-// INTERNAL IMPORTS
+import { AIService, SUPPORTED_LANGUAGES } from "../../../Utils/AIService";
 import Style from "./Chat.module.css";
 import images from "../../../assets";
 import { converTime } from "../../../Utils/apiFeature";
 import { Loader } from "../../index";
 import { IPFSService } from "../../../Utils/IPFSService";
-import { AIService } from "../../../Utils/AIService";
 import { encryptFileWithPassphrase, decryptFileWithPassphrase } from "../../../Utils/CryptoService";
 import CryptoJS from "crypto-js";
+
+const MetricsChart = React.memo(({ data }) => (
+  <div className={Style.metrics_chart}>
+    <h4>Translation Accuracy Trends</h4>
+    <LineChart
+      width={600}
+      height={300}
+      data={data}
+      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+    >
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis
+        dataKey="timestamp"
+        tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString()}
+      />
+      <YAxis 
+        domain={[0.6, 1]} 
+        tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+      />
+      <Tooltip
+        formatter={(value) => `${(value * 100).toFixed(1)}%`}
+        labelFormatter={(timestamp) => new Date(timestamp).toLocaleDateString()}
+      />
+      <Legend />
+      <Line
+        type="monotone"
+        dataKey="accuracy"
+        stroke="#8884d8"
+        name="Accuracy"
+        isAnimationActive={false}
+      />
+      <Line
+        type="monotone"
+        dataKey="confidence"
+        stroke="#82ca9d"
+        name="Confidence"
+        isAnimationActive={false}
+      />
+    </LineChart>
+  </div>
+));
+
+const TranslationUI = React.memo(({ 
+  selectedLanguage,
+  onLanguageChange,
+  showMetrics,
+  onToggleMetrics,
+  showTranslation,
+  translatedMessage,
+  onCloseTranslation,
+  translationMetrics,
+  historicalMetrics 
+}) => {
+  if (!SUPPORTED_LANGUAGES || !Array.isArray(SUPPORTED_LANGUAGES)) {
+    return null;
+  }
+  
+  return (
+    <div className={Style.translation_container}>
+      <div className={Style.translation_header}>
+        <select
+          value={selectedLanguage}
+          onChange={onLanguageChange}
+          className={Style.language_select}
+        >
+          {SUPPORTED_LANGUAGES.map(lang => (
+            <option key={lang.code} value={lang.code}>
+              {lang.name}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={onToggleMetrics}
+          className={Style.metrics_toggle}
+        >
+          {showMetrics ? '📊 Hide Metrics' : '📊 Show Metrics'}
+        </button>
+      </div>
+
+      <div className={Style.translation_content}>
+        <div className={Style.translation_text}>
+          {translatedMessage}
+        </div>
+        
+        {translationMetrics && (
+          <div className={Style.metrics_badge}>
+            Accuracy: {(translationMetrics.accuracy * 100).toFixed(1)}%
+          </div>
+        )}
+      </div>
+
+      {showMetrics && historicalMetrics?.length > 0 && (
+        <MetricsChart data={historicalMetrics} />
+      )}
+    </div>
+  );
+});
+
+const DecryptionKeyModal = ({ show, onClose, decryptionKey }) => {
+  if (!show) return null;
+
+  return (
+    <div className={Style.modal_overlay}>
+      <div className={Style.modal_content} style={{ maxWidth: '500px' }}>
+        <h3>🔐 Decryption Keys</h3>
+        <div className={Style.decryption_key_content}>
+          <p>Please save these decryption keys securely. You'll need them to access your files later.</p>
+          <pre className={Style.key_display}>{decryptionKey}</pre>
+          <div className={Style.key_actions}>
+            <button
+              className={Style.copy_btn}
+              onClick={() => {
+                navigator.clipboard.writeText(decryptionKey);
+                alert('Keys copied to clipboard!');
+              }}
+            >
+              📋 Copy Keys
+            </button>
+            <button className={Style.close_btn} onClick={onClose}>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Chat = ({
   functionName,
@@ -23,44 +158,87 @@ const Chat = ({
   currentUserAddress,
   readUser,
 }) => {
-  // STATE
+  const router = useRouter();
   const [message, setMessage] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [sentiment, setSentiment] = useState(null);
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [translatedMessage, setTranslatedMessage] = useState("");
+  const [messageCategory, setMessageCategory] = useState("general");
+  const [selectedLanguage, setSelectedLanguage] = useState('es');
+  const [translationMetrics, setTranslationMetrics] = useState(null);
+  const [showMetrics, setShowMetrics] = useState(false);
+  const [historicalMetrics, setHistoricalMetrics] = useState([]);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
-  const [chatData, setChatData] = useState({ address: "", name: "" });
   const [appointmentData, setAppointmentData] = useState({
     date: "",
     time: "",
     reason: "",
     symptoms: "",
-    urgency: "normal",
+    urgency: "normal"
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [decrypting, setDecrypting] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [currentDecryptionKey, setCurrentDecryptionKey] = useState('');
-  const [localLoading, setLocalLoading] = useState(false);
-
-  const router = useRouter();
+  const [suggestions, setSuggestions] = useState([]);
+  const [sentiment, setSentiment] = useState(null);
+  const [showPHIWarning, setShowPHIWarning] = useState(false);
+  const [chatData, setChatData] = useState({ address: "", name: "" });
 
   useEffect(() => {
     if (!router.isReady) return;
+    
     setChatData({
       address: router.query.address || "",
       name: router.query.name || ""
     });
-  }, [router.isReady]);
+  }, [router.isReady, router.query]);
 
   useEffect(() => {
     if (chatData.address) {
       readMessage(chatData.address);
       readUser(chatData.address);
     }
-  }, [chatData.address]);
+  }, [chatData.address, readMessage, readUser]);
 
-  const handleMessageChange = (e) => {
+  const handleLanguageChange = useCallback((e) => {
+    setSelectedLanguage(e.target.value);
+  }, []);
+
+  const handleToggleMetrics = useCallback(() => {
+    setShowMetrics(prev => !prev);
+  }, []);
+
+  const handleCloseTranslation = useCallback(() => {
+    setShowTranslation(false);
+  }, []);
+
+  const handleTranslateMessage = useCallback(async () => {
+    if (!message.trim()) {
+      alert("Please type a message to translate");
+      return;
+    }
+    try {
+      const result = await AIService.translateMessage(message, selectedLanguage);
+      setTranslatedMessage(result.translation);
+      setTranslationMetrics(result.metrics);
+      setShowTranslation(true);
+      
+      setHistoricalMetrics(prev => [
+        {
+          accuracy: result.metrics.accuracy,
+          confidence: result.metrics.confidence,
+          timestamp: result.metrics.timestamp
+        },
+        ...prev.slice(0, 9)
+      ]);
+    } catch (error) {
+      console.error('Translation error:', error);
+      alert("Failed to translate message");
+    }
+  }, [message, selectedLanguage]);
+
+  const handleMessageChange = useCallback((e) => {
     const newMessage = e.target.value;
     setMessage(newMessage);
     
@@ -69,18 +247,23 @@ const Chat = ({
         const newSuggestions = AIService.generateReplySuggestions(newMessage);
         setSuggestions(newSuggestions);
         setSentiment(AIService.analyzeSentiment(newMessage));
+        setMessageCategory(AIService.classifyTopic(newMessage));
+        
+        const phiTerms = AIService.detectPHI(newMessage);
+        if (phiTerms.length > 0) {
+          setShowPHIWarning(true);
+        }
       } catch (error) {
-        console.error('Error generating suggestions:', error);
-        setSuggestions([]);
-        setSentiment(null);
+        console.error('Error processing message:', error);
       }
     } else {
       setSuggestions([]);
       setSentiment(null);
+      setMessageCategory("general");
     }
-  };
+  }, []);
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = useCallback(async () => {
     if (!message.trim() || localLoading) return;
     
     try {
@@ -99,7 +282,7 @@ const Chat = ({
     } finally {
       setLocalLoading(false);
     }
-  };
+  }, [message, localLoading, functionName, chatData.address]);
 
   const handleAppointmentSubmit = async (e) => {
     e.preventDefault();
@@ -109,52 +292,6 @@ const Chat = ({
     }
 
     try {
-      let uploadedFileUrls = [];
-      let decryptionKeys = [];
-      
-      // First handle any file uploads
-      if (selectedFiles.length > 0) {
-        setUploadProgress(0);
-        const totalFiles = selectedFiles.length;
-        
-        for (let i = 0; i < selectedFiles.length; i++) {
-          const file = selectedFiles[i];
-          try {
-            const fileBuffer = await new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.onerror = (error) => reject(new Error(`Failed to read file: ${error.message}`));
-              reader.readAsArrayBuffer(file);
-            });
-            
-            const base64Data = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
-            const randomKey = CryptoJS.lib.WordArray.random(32).toString();
-            
-            const encryptionResult = await encryptFileWithPassphrase(base64Data, randomKey);
-            if (!encryptionResult.success) {
-              throw new Error(`Encryption failed for ${file.name}`);
-            }
-            
-            const encryptedFileBlob = new Blob([encryptionResult.encryptedData], { type: file.type });
-            const encryptedFile = new File([encryptedFileBlob], file.name, { type: file.type });
-            
-            const result = await IPFSService.uploadFile(encryptedFile);
-            if (!result.success) {
-              throw new Error(`Failed to upload ${file.name}`);
-            }
-            
-            uploadedFileUrls.push(`[ENC_FILE]${file.name}|${result.url}|${encryptionResult.passphraseHash}|${encryptionResult.salt}`);
-            decryptionKeys.push({ fileName: file.name, key: randomKey });
-            
-            setUploadProgress(((i + 1) / totalFiles) * 100);
-          } catch (fileError) {
-            console.error(`Error processing file ${file.name}:`, fileError);
-            continue;
-          }
-        }
-      }
-      
-      // Format appointment message with emojis and better structure
       const appointmentMsg = `🏥 *New Appointment Request*\n
 📅 Date: ${appointmentData.date}
 ⏰ Time: ${appointmentData.time}
@@ -162,27 +299,10 @@ const Chat = ({
 ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
 🚨 Urgency: ${appointmentData.urgency.toUpperCase()}`;
       
-      // Send appointment message
       await functionName({
         msg: appointmentMsg,
-        address: chatData.address,
+        address: currentUserAddress,
       });
-      
-      // Send file messages
-      for (const fileUrl of uploadedFileUrls) {
-        await functionName({
-          msg: fileUrl,
-          address: chatData.address,
-        });
-      }
-
-      // Show decryption keys in modal
-      if (decryptionKeys.length > 0) {
-        setCurrentDecryptionKey(decryptionKeys.map(dk => 
-          `File: ${dk.fileName}\nKey: ${dk.key}`
-        ).join('\n\n'));
-        setShowKeyModal(true);
-      }
 
       setShowAppointmentForm(false);
       setAppointmentData({
@@ -359,40 +479,25 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
     }
   };
 
-  const DecryptionKeyModal = ({ show, onClose, decryptionKey }) => {
-    if (!show) return null;
-
-    return (
-      <div className={Style.modal_overlay}>
-        <div className={Style.modal_content} style={{ maxWidth: '500px' }}>
-          <h3>🔐 Decryption Keys</h3>
-          <div className={Style.decryption_key_content}>
-            <p>Please save these decryption keys securely. You'll need them to access your files later.</p>
-            <pre className={Style.key_display}>{decryptionKey}</pre>
-            <div className={Style.key_actions}>
-              <button
-                className={Style.copy_btn}
-                onClick={() => {
-                  navigator.clipboard.writeText(decryptionKey);
-                  alert('Keys copied to clipboard!');
-                }}
-              >
-                📋 Copy Keys
-              </button>
-              <button className={Style.close_btn} onClick={onClose}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  const handleSummarizeChat = () => {
+    if (friendMsg.length === 0) {
+      alert("No messages to summarize");
+      return;
+    }
+    const allMessages = friendMsg.map(msg => msg.msg).join(" ");
+    const summary = AIService.summarizeText(allMessages);
+    alert("Chat Summary:\n" + summary);
   };
 
   const messagesEndRef = useRef(null);
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  useEffect(() => {
+    const metrics = AIService.getHistoricalMetrics();
+    setHistoricalMetrics(metrics);
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -503,66 +608,120 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
 
       {currentUserName && currentUserAddress && (
         <div className={Style.Chat_box_send}>
-          <div className={Style.Chat_box_send_img}>
-            <div className={Style.action_button} onClick={() => setShowAppointmentForm(true)} title="Schedule Appointment">
-              <Image 
-                src={images.smile} 
-                alt="Schedule Appointment" 
-                width={50} 
-                height={50}
-              />
-            </div>
-            
-            <input
-              type="text"
-              placeholder="Type your message..."
-              value={message}
-              onChange={handleMessageChange}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !localLoading) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              disabled={localLoading || loading}
-              className={localLoading || loading ? Style.input_disabled : ''}
-            />
-            
-            <div className={Style.file_upload}>
-              <input
-                type="file"
-                id="file"
-                className={Style.file_input}
-                accept="image/*,.pdf,.doc,.docx"
-                onChange={handleFileSelect}
-                multiple
-              />
-              <label htmlFor="file" title="Upload Files">
-                <Image 
-                  src={images.file} 
-                  alt="Upload" 
-                  width={50} 
-                  height={50}
-                />
-              </label>
-            </div>
-            
-            {localLoading || loading ? (
-              <div className={`${Style.action_button} ${Style.loading_indicator}`}>
-                <Loader />
+          <div className={Style.Chat_box_send_wrapper}>
+            <div className={Style.Chat_box_send_input}>
+              <div className={Style.ai_actions}>
+                <button 
+                  onClick={handleSummarizeChat}
+                  className={Style.ai_button}
+                  title="Summarize Chat"
+                >
+                  📝
+                </button>
+                <button
+                  onClick={handleTranslateMessage}
+                  className={Style.ai_button}
+                  title="Translate Message"
+                >
+                  🌐
+                </button>
               </div>
-            ) : (
-              <div 
-                className={Style.action_button} 
-                onClick={handleSendMessage} 
-                title="Send Message"
-              >
-                <Image
-                  src={images.send}
-                  alt="Send"
-                  width={50}
-                  height={50}
-                />
+
+              <input
+                type="text"
+                placeholder="Type your message..."
+                value={message}
+                onChange={handleMessageChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !localLoading) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                disabled={localLoading || loading}
+                className={`${Style.message_input} ${localLoading || loading ? Style.input_disabled : ''}`}
+              />
+
+              <div className={Style.send_actions}>
+                <div className={Style.file_upload}>
+                  <input
+                    type="file"
+                    id="file"
+                    className={Style.file_input}
+                    accept="image/*,.pdf,.doc,.docx"
+                    onChange={handleFileSelect}
+                    multiple
+                  />
+                  <label htmlFor="file" title="Upload Files">
+                    <Image 
+                      src={images.file} 
+                      alt="Upload" 
+                      width={50} 
+                      height={50}
+                    />
+                  </label>
+                </div>
+                
+                {localLoading || loading ? (
+                  <div className={`${Style.action_button} ${Style.loading_indicator}`}>
+                    <Loader />
+                  </div>
+                ) : (
+                  <div 
+                    className={Style.action_button} 
+                    onClick={handleSendMessage} 
+                    title="Send Message"
+                  >
+                    <Image
+                      src={images.send}
+                      alt="Send"
+                      width={50}
+                      height={50}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {showTranslation && (
+              <div className={Style.translation_side_panel}>
+                <div className={Style.translation_container}>
+                  <div className={Style.translation_header}>
+                    <select
+                      value={selectedLanguage}
+                      onChange={(e) => setSelectedLanguage(e.target.value)}
+                      className={Style.language_select}
+                    >
+                      {SUPPORTED_LANGUAGES.map(lang => (
+                        <option key={lang.code} value={lang.code}>
+                          {lang.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => setShowMetrics(!showMetrics)}
+                      className={Style.metrics_toggle}
+                    >
+                      {showMetrics ? '📊 Hide Metrics' : '📊 Show Metrics'}
+                    </button>
+                  </div>
+
+                  <div className={Style.translation_content}>
+                    <div className={Style.translation_text}>
+                      {translatedMessage}
+                    </div>
+                    
+                    {translationMetrics && (
+                      <div className={Style.metrics_badge}>
+                        Accuracy: {(translationMetrics.accuracy * 100).toFixed(1)}%
+                      </div>
+                    )}
+                  </div>
+
+                  {showMetrics && historicalMetrics?.length > 0 && (
+                    <MetricsChart data={historicalMetrics} />
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -627,73 +786,6 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                   <option value="normal">🟡 Normal - Minor health issue</option>
                   <option value="high">🔴 High - Urgent care needed</option>
                 </select>
-              </div>
-
-              <div className={Style.form_group}>
-                <label className={Style.file_upload_label}>
-                  <span>📎 Attach Medical Documents</span>
-                  <small>Upload relevant medical records, test results, or prescriptions</small>
-                </label>
-                <div 
-                  className={Style.file_upload_area}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.add(Style.drag_over);
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.remove(Style.drag_over);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.remove(Style.drag_over);
-                    const files = Array.from(e.dataTransfer.files);
-                    handleFileSelect({ target: { files } });
-                  }}
-                  onClick={() => document.getElementById('appointment-files').click()}
-                >
-                  <input
-                    type="file"
-                    id="appointment-files"
-                    multiple
-                    onChange={handleFileSelect}
-                    accept="image/*,.pdf,.doc,.docx"
-                    className={Style.file_input}
-                  />
-                  <div className={Style.upload_icon}>📤</div>
-                  <p>Drop files here or click to browse</p>
-                  <small>Maximum 5 files (5MB each)</small>
-                </div>
-                
-                {selectedFiles.length > 0 && (
-                  <div className={Style.selected_files}>
-                    {selectedFiles.map((file, index) => (
-                      <div key={index} className={Style.file_item}>
-                        <span className={Style.file_icon}>
-                          {file.type.includes('image') ? '🖼️' : '📄'}
-                        </span>
-                        <span className={Style.file_name}>{file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeFile(index)}
-                          className={Style.remove_file}
-                          aria-label="Remove file"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                    
-                    {uploadProgress > 0 && (
-                      <div className={Style.upload_progress}>
-                        <div 
-                          className={Style.upload_progress_bar}
-                          style={{ width: `${uploadProgress}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               <div className={Style.form_buttons}>

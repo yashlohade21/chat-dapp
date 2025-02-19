@@ -2,15 +2,13 @@
 import Fuse from 'fuse.js';
 
 type Sentiment = 'positive' | 'negative' | 'neutral';
+type TopicCategory = 'appointment' | 'prescription' | 'general';
 
 interface FuseOptions {
   keys: string[];
   threshold: number;
   distance: number;
 }
-
-// Sentiment analyzer initialization
-// const analyzer = new natural.SentimentAnalyzer("English", natural.PorterStemmer, "afinn");
 
 // Fuzzy search configuration
 const fuseOptions: FuseOptions = {
@@ -19,12 +17,32 @@ const fuseOptions: FuseOptions = {
   distance: 100
 };
 
+export const SUPPORTED_LANGUAGES = [
+  { code: 'es', name: 'Spanish' },
+  { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
+  { code: 'it', name: 'Italian' },
+  { code: 'pt', name: 'Portuguese' },
+  { code: 'ru', name: 'Russian' },
+  { code: 'zh', name: 'Chinese' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'ko', name: 'Korean' },
+  { code: 'hi', name: 'Hindi' }
+] as const;
+
+export type LanguageCode = typeof SUPPORTED_LANGUAGES[number]['code'];
+
+export interface AIMetrics {
+  accuracy: number;
+  confidence: number;
+  timestamp: number;
+}
+
 export const AIService = {
-  // Simple sentiment analysis based on keywords
-  analyzeSentiment: (message: string): 'positive' | 'negative' | 'neutral' => {
+  // Existing methods
+  analyzeSentiment: (message: string): Sentiment => {
     const text = message.toLowerCase();
     
-    // Medical/healthcare specific sentiment words
     const positiveWords = [
       'better', 'improving', 'good', 'great', 'thanks', 'thank', 'helpful',
       'recovered', 'healing', 'progress', 'resolved', 'relief'
@@ -42,11 +60,46 @@ export const AIService = {
     return 'neutral';
   },
 
-  // Generate medical/healthcare focused reply suggestions
+  // New method: Summarize Text
+  summarizeText: (text: string): string => {
+    // Basic implementation - returns first 100 chars with ellipsis
+    // TODO: Integrate with a proper summarization API/model
+    const sentences = text.split(/[.!?]+/);
+    const firstThreeSentences = sentences.slice(0, 3).join('. ');
+    return firstThreeSentences + (sentences.length > 3 ? '...' : '');
+  },
+
+  // New method: Translate Message
+  translateMessage: async (message: string, targetLang: LanguageCode): Promise<{
+    translation: string;
+    metrics: AIMetrics;
+  }> => {
+    // Simulated translation with metrics
+    const metrics = {
+      accuracy: 0.85 + Math.random() * 0.15, // Simulated accuracy between 85-100%
+      confidence: 0.75 + Math.random() * 0.25, // Simulated confidence between 75-100%
+      timestamp: Date.now()
+    };
+
+    // In a real implementation, this would call a translation API
+    return {
+      translation: `[${targetLang.toUpperCase()}] ${message}`,
+      metrics
+    };
+  },
+
+  // New method: Classify Topic
+  classifyTopic: (text: string): TopicCategory => {
+    const lowerText = text.toLowerCase();
+    if (lowerText.includes('appointment') || lowerText.includes('schedule')) return 'appointment';
+    if (lowerText.includes('medication') || lowerText.includes('prescription')) return 'prescription';
+    return 'general';
+  },
+
+  // Existing methods
   generateReplySuggestions: (message: string): string[] => {
     const text = message.toLowerCase();
     
-    // Medical appointment scheduling
     if (text.includes('appointment') || text.includes('schedule') || text.includes('book')) {
       return [
         'What date and time works best for you?',
@@ -131,5 +184,16 @@ export const AIService = {
   detectPHI: (message: string): string[] => {
     const terms = ['patient', 'ssn', 'dob', 'medical', 'health'];
     return terms.filter(term => message.toLowerCase().includes(term));
+  },
+
+  // Add method to get historical metrics
+  getHistoricalMetrics: (): AIMetrics[] => {
+    // Simulate historical data
+    const now = Date.now();
+    return Array.from({ length: 10 }, (_, i) => ({
+      accuracy: 0.80 + Math.random() * 0.20,
+      confidence: 0.70 + Math.random() * 0.30,
+      timestamp: now - (i * 24 * 60 * 60 * 1000) // Last 10 days
+    }));
   }
 };
