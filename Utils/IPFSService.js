@@ -8,12 +8,6 @@ const IPFS_GATEWAYS = [
   'https://cloudflare-ipfs.com/ipfs/',
   'https://dweb.link/ipfs/'
 ];
-const PINATA_GATEWAY = [
-  'https://gateway.pinata.cloud/ipfs/',
-  'https://ipfs.io/ipfs/',
-  'https://cloudflare-ipfs.com/ipfs/',
-  'https://dweb.link/ipfs/'
-];
 
 const PINATA_API_KEY = process.env.NEXT_PUBLIC_PINATA_API_KEY;
 const PINATA_SECRET_KEY = process.env.NEXT_PUBLIC_PINATA_SECRET_KEY;
@@ -21,6 +15,15 @@ const PINATA_SECRET_KEY = process.env.NEXT_PUBLIC_PINATA_SECRET_KEY;
 export const IPFSService = {
   uploadFile: async (file) => {
     try {
+      // Debug logs for API keys
+      console.log('Checking Pinata configuration...');
+      if (!PINATA_API_KEY) {
+        console.error('PINATA_API_KEY is missing');
+      }
+      if (!PINATA_SECRET_KEY) {
+        console.error('PINATA_SECRET_KEY is missing');
+      }
+
       if (!file || !file.name) {
         throw new Error('Invalid file provided');
       }
@@ -31,7 +34,7 @@ export const IPFSService = {
       }
 
       if (!PINATA_API_KEY || !PINATA_SECRET_KEY) {
-        throw new Error('Pinata API keys not configured');
+        throw new Error('Pinata API keys not configured. Please check your environment variables.');
       }
 
       const formData = new FormData();
@@ -53,6 +56,22 @@ export const IPFSService = {
       });
       formData.append('pinataOptions', options);
 
+      console.log('Preparing to upload to Pinata...', {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size
+      });
+
+      // Log the request configuration
+      console.log('Request configuration:', {
+        url: PINATA_API_URL,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'pinata_api_key': 'CONFIGURED',
+          'pinata_secret_api_key': 'CONFIGURED'
+        }
+      });
+
       const response = await axios.post(PINATA_API_URL, formData, {
         maxBodyLength: Infinity,
         headers: {
@@ -63,23 +82,35 @@ export const IPFSService = {
         timeout: 30000,
       });
 
-      if (!response.data || !response.data.IpfsHash) {
-        throw new Error('Invalid response from Pinata');
-      }
+      console.log('Pinata upload successful:', {
+        IpfsHash: response.data.IpfsHash,
+        PinSize: response.data.PinSize,
+        Timestamp: response.data.Timestamp
+      });
+
+      const ipfsUrl = `${IPFS_GATEWAYS[0]}${response.data.IpfsHash}`;
+      console.log('Generated IPFS URL:', ipfsUrl);
 
       return {
         success: true,
         cid: response.data.IpfsHash,
-        url: `${PINATA_GATEWAY}${response.data.IpfsHash}`,
+        url: ipfsUrl,
         size: file.size,
         type: file.type,
         name: file.name
       };
     } catch (error) {
-      console.error('Error uploading to IPFS:', error);
+      console.error('Detailed upload error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        statusText: error.response?.statusText
+      });
+
       let errorMessage = 'Failed to upload file';
       if (error.response) {
         errorMessage = error.response.data?.error?.details || error.response.data?.message || errorMessage;
+        console.error('Pinata error details:', error.response.data);
       } else if (error.message) {
         errorMessage = error.message;
       }

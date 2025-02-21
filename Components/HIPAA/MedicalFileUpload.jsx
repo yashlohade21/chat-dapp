@@ -29,14 +29,14 @@ const arrayBufferToBase64 = (buffer) => {
   return window.btoa(binary);
 };
 
-const base64ToArrayBuffer = (base64) => {
-  const binary_string = window.atob(base64);
-  const bytes = new Uint8Array(binary_string.length);
-  for (let i = 0; i < binary_string.length; i++) {
-    bytes[i] = binary_string.charCodeAt(i);
-  }
-  return bytes.buffer;
-};
+// const base64ToArrayBuffer = (base64) => {
+//   const binary_string = window.atob(base64);
+//   const bytes = new Uint8Array(binary_string.length);
+//   for (let i = 0; i < binary_string.length; i++) {
+//     bytes[i] = binary_string.charCodeAt(i);
+//   }
+//   return bytes.buffer;
+// };
 
 const MedicalFileUpload = ({ onUpload, account }) => {
   const [files, setFiles] = useState([]);
@@ -216,68 +216,64 @@ const MedicalFileUpload = ({ onUpload, account }) => {
     }
   };
 
+  const base64ToArrayBuffer = (base64) => {
+    const binaryString = window.atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  };
+  
   const handleDecrypt = async (file, providedKey) => {
     if (!account) {
       setError('Please connect your wallet to view documents');
       return;
     }
-
+  
     if (file.owner !== account) {
       setError('You are not authorized to view this document');
       return;
     }
-
+  
     setDecrypting(true);
     setError('');
-
+  
     try {
       const response = await IPFSService.getFile(file.cid);
       if (!response.success) {
         throw new Error(`Failed to fetch file ${file.name} from IPFS`);
       }
-
-      // Add retry logic for decryption
-      let decryptionAttempts = 0;
-      const maxAttempts = 3;
-      let decryptionResult;
-
-      while (decryptionAttempts < maxAttempts) {
-        try {
-          decryptionResult = await decryptFileWithPassphrase(
-            response.data,
-            providedKey,
-            file.passphraseHash,
-            file.salt
-          );
-
-          if (decryptionResult.success) {
-            break;
-          }
-        } catch (err) {
-          console.error(`Decryption attempt ${decryptionAttempts + 1} failed:`, err);
-        }
-
-        decryptionAttempts++;
-        if (decryptionAttempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second between attempts
-        }
+  
+      const decryptionResult = await decryptFileWithPassphrase(
+        response.data,
+        providedKey,
+        file.passphraseHash,
+        file.salt
+      );
+  
+      if (!decryptionResult.success) {
+        throw new Error(decryptionResult.error || "Decryption failed");
       }
-
-      if (!decryptionResult || !decryptionResult.success) {
-        throw new Error(decryptionResult?.error || "Decryption failed after multiple attempts");
-      }
-
-      // Validate decrypted data before setting
-      if (!decryptionResult.decryptedData) {
-        throw new Error("Decryption produced empty data");
-      }
-
-      setDecryptedFiles(prev => [...prev, {
-        cid: file.cid,
-        name: file.name,
-        type: file.type,
-        content: decryptionResult.decryptedData
-      }]);
+  
+      // Convert base64 to ArrayBuffer
+      const arrayBuffer = base64ToArrayBuffer(decryptionResult.decryptedData);
+  
+      // Create a Blob from the ArrayBuffer
+      const blob = new Blob([arrayBuffer], { type: file.type });
+  
+      // Create a URL for the Blob
+      const url = URL.createObjectURL(blob);
+  
+      setDecryptedFiles((prev) => [
+        ...prev,
+        {
+          cid: file.cid,
+          name: file.name,
+          type: file.type,
+          content: url, // Use the Blob URL for rendering
+        },
+      ]);
     } catch (err) {
       console.error('Decryption error:', err);
       setError('Error decrypting file. Please make sure you entered the correct key.');
@@ -408,51 +404,26 @@ const MedicalFileUpload = ({ onUpload, account }) => {
         </div>
       )}
 
-      {decryptedFiles.length > 0 && (
-        <div className={styles.decryptedFilesSection}>
-          <h4>Decrypted Documents</h4>
-          <ul>
-            {decryptedFiles.map((file) => (
-              <li key={file.cid} className={styles.decryptedFile}>
-                <h5>{file.name}</h5>
-                <div className={styles.fileContent}>
-                  {file.type.startsWith('image/') ? (
-                    <img 
-                      src={`data:${file.type};base64,${file.content}`}
-                      alt={file.name}
-                      className={styles.decryptedImage}
-                    />
-                  ) : file.type === 'application/pdf' ? (
-                    <object
-                      data={`data:${file.type};base64,${file.content}`}
-                      type="application/pdf"
-                      width="100%"
-                      height="600px"
-                      className={styles.pdfViewer}
-                    >
-                      <p>Unable to display PDF. <a 
-                        href={`data:${file.type};base64,${file.content}`}
-                        download={file.name}
-                        className={styles.downloadLink}
-                      >
-                        Download {file.name}
-                      </a></p>
-                    </object>
-                  ) : (
-                    <a 
-                      href={`data:${file.type};base64,${file.content}`}
-                      download={file.name}
-                      className={styles.downloadLink}
-                    >
-                      Download {file.name}
-                    </a>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {decryptedFiles.map((file) => (
+        <li key={file.cid} className={styles.decryptedFile}>
+          <h5>{file.name}</h5>
+          <div className={styles.fileContent}>
+            {file.type === 'application/pdf' ? (
+              <iframe
+                src={file.content}
+                width="100%"
+                height="600px"
+                title={file.name}
+                className={styles.pdfViewer}
+              />
+            ) : (
+              <a href={file.content} download={file.name} className={styles.downloadLink}>
+                Download {file.name}
+              </a>
+            )}
+          </div>
+        </li>
+      ))}
 
       {showDecryptionKey && (
         <div className={styles.decryptionKeyModal}>
