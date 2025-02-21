@@ -29,15 +29,6 @@ const arrayBufferToBase64 = (buffer) => {
   return window.btoa(binary);
 };
 
-// const base64ToArrayBuffer = (base64) => {
-//   const binary_string = window.atob(base64);
-//   const bytes = new Uint8Array(binary_string.length);
-//   for (let i = 0; i < binary_string.length; i++) {
-//     bytes[i] = binary_string.charCodeAt(i);
-//   }
-//   return bytes.buffer;
-// };
-
 const MedicalFileUpload = ({ onUpload, account }) => {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -48,6 +39,7 @@ const MedicalFileUpload = ({ onUpload, account }) => {
   const [decrypting, setDecrypting] = useState(false);
   const [showDecryptionKey, setShowDecryptionKey] = useState(false);
   const [generatedPassphrase, setGeneratedPassphrase] = useState('');
+  const [epochProgress, setEpochProgress] = useState({ current: 0, total: 50 });
 
   useEffect(() => {
     if (account) {
@@ -137,13 +129,17 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       const uploadedFilesArray = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const detectionResult = await documentDetectionService.detectFakeDocument(file);
+        
+        const detectionResult = await documentDetectionService.detectFakeDocument(file, (epoch, total) => {
+          setEpochProgress({ current: epoch, total });
+        });
+        
         if (!detectionResult.isReal) {
           throw new Error(`The document ${file.name} failed authenticity check (Confidence: ${Math.round(detectionResult.confidence * 100)}%)`);
         }
+        
         setProgress((i / files.length) * 25);
 
-        // Read file as ArrayBuffer
         const fileBuffer = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
@@ -155,18 +151,15 @@ const MedicalFileUpload = ({ onUpload, account }) => {
           throw new Error('Failed to read file');
         }
 
-        // Encrypt the file data
         const encryptResult = await encryptFileWithPassphrase(fileBuffer, randomKey);
         
         if (!encryptResult.success) {
           throw new Error(encryptResult.error || "Encryption failed");
         }
 
-        // Create a Blob from the encrypted data
         const encryptedBlob = new Blob([encryptResult.encryptedData], { type: file.type });
         const encryptedFile = new File([encryptedBlob], file.name, { type: file.type });
 
-        // Upload to IPFS
         const result = await IPFSService.uploadFile(encryptedFile);
         if (!result.success) {
           throw new Error(result.error || 'Upload failed');
@@ -213,6 +206,7 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       setError('Error uploading files: ' + (err.message || 'Unknown error'));
     } finally {
       setUploading(false);
+      setEpochProgress({ current: 0, total: 50 });
     }
   };
 
@@ -230,50 +224,50 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       setError('Please connect your wallet to view documents');
       return;
     }
-  
+
     if (file.owner !== account) {
       setError('You are not authorized to view this document');
       return;
     }
-  
+
     setDecrypting(true);
     setError('');
-  
+
     try {
       const response = await IPFSService.getFile(file.cid);
       if (!response.success) {
         throw new Error(`Failed to fetch file ${file.name} from IPFS`);
       }
-  
+
       const decryptionResult = await decryptFileWithPassphrase(
         response.data,
         providedKey,
         file.passphraseHash,
         file.salt
       );
-  
+
       if (!decryptionResult.success) {
         throw new Error(decryptionResult.error || "Decryption failed");
       }
-  
-      // Convert base64 to ArrayBuffer
+
       const arrayBuffer = base64ToArrayBuffer(decryptionResult.decryptedData);
-  
-      // Create a Blob from the ArrayBuffer
       const blob = new Blob([arrayBuffer], { type: file.type });
-  
-      // Create a URL for the Blob
       const url = URL.createObjectURL(blob);
-  
-      setDecryptedFiles((prev) => [
-        ...prev,
-        {
+
+      setDecryptedFiles(prev => {
+        prev.forEach(oldFile => {
+          if (oldFile.content && oldFile.content.startsWith('blob:')) {
+            URL.revokeObjectURL(oldFile.content);
+          }
+        });
+        
+        return [...prev.filter(f => f.cid !== file.cid), {
           cid: file.cid,
           name: file.name,
           type: file.type,
-          content: url, // Use the Blob URL for rendering
-        },
-      ]);
+          content: url
+        }];
+      });
     } catch (err) {
       console.error('Decryption error:', err);
       setError('Error decrypting file. Please make sure you entered the correct key.');
@@ -281,6 +275,16 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       setDecrypting(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      decryptedFiles.forEach(file => {
+        if (file.content && file.content.startsWith('blob:')) {
+          URL.revokeObjectURL(file.content);
+        }
+      });
+    };
+  }, [decryptedFiles]);
 
   return (
     <div className={styles.uploadContainer}>
@@ -338,9 +342,23 @@ const MedicalFileUpload = ({ onUpload, account }) => {
         )}
 
         {uploading && (
-          <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: `${progress}%` }} />
-            <span>{progress}% Complete</span>
+          <div className={styles.progressContainer}>
+            <div className={styles.progressBar}>
+              <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+              <span>{progress}% Complete</span>
+            </div>
+            
+            {epochProgress.current > 0 && (
+              <div className={styles.epochProgress}>
+                <div className={styles.epochBar}>
+                  <div 
+                    className={styles.epochFill} 
+                    style={{ width: `${(epochProgress.current / epochProgress.total) * 100}%` }} 
+                  />
+                </div>
+                <span>AI Processing: Epoch {epochProgress.current}/{epochProgress.total}</span>
+              </div>
+            )}
           </div>
         )}
 

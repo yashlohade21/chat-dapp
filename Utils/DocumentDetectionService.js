@@ -86,7 +86,7 @@ class DocumentDetectionService {
     return history;
   }
 
-  async detectFakeDocument(file) {
+  async detectFakeDocument(file, onEpochProgress) {
     if (!this.initialized) {
       await this.initialize();
     }
@@ -95,8 +95,21 @@ class DocumentDetectionService {
       // Extract features from the document
       const features = await this.extractFeatures(file);
       
-      // Convert features to tensor - reshape to match model input
+      // Convert features to tensor
       const inputTensor = tf.tensor2d([features]);
+      
+      // Train or fine-tune the model with progress callback
+      await this.model.fit(inputTensor, tf.tensor2d([[1]]), {
+        epochs: 50,
+        callbacks: {
+          onEpochEnd: (epoch, logs) => {
+            this.accuracy = logs.acc;
+            if (onEpochProgress) {
+              onEpochProgress(epoch + 1, 50);
+            }
+          }
+        }
+      });
       
       // Make prediction
       const prediction = await this.model.predict(inputTensor).data();

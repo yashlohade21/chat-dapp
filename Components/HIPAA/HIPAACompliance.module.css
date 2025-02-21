@@ -143,6 +143,33 @@
   transition: width 0.3s ease;
 }
 
+.progressContainer {
+  margin: 1rem 0;
+}
+
+.epochProgress {
+  margin-top: 1rem;
+}
+
+.epochBar {
+  width: 100%;
+  height: 4px;
+  background-color: #333;
+  border-radius: 2px;
+  margin: 0.5rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.epochFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: #4CAF50;
+  transition: width 0.3s ease;
+}
+
 .uploadedFiles {
   margin-top: 2rem;
   text-align: left;

@@ -86,50 +86,7 @@ const decryptFileWithPassphrase = async (encryptedData, passphrase, expectedHash
   }
 };
 
-const generatePatientKeyPair = () => {
-  try {
-    const publicKey = CryptoJS.lib.WordArray.random(32).toString();
-    const privateKey = CryptoJS.lib.WordArray.random(32).toString();
-    
-    const patientKeys = {
-      publicKey,
-      privateKey,
-      timestamp: Date.now(),
-      hash: CryptoJS.SHA256(publicKey + privateKey).toString()
-    };
-    
-    localStorage.setItem('patientKeys', JSON.stringify(patientKeys));
-    
-    return patientKeys;
-  } catch (error) {
-    console.error('Error generating patient key pair:', error);
-    throw new Error('Failed to generate encryption keys');
-  }
-};
-
-const getPatientKeys = () => {
-  try {
-    const storedKeys = localStorage.getItem('patientKeys');
-    if (!storedKeys) {
-      return generatePatientKeyPair();
-    }
-    
-    const keys = JSON.parse(storedKeys);
-    const verifyHash = CryptoJS.SHA256(keys.publicKey + keys.privateKey).toString();
-    if (verifyHash !== keys.hash) {
-      throw new Error('Keys integrity check failed');
-    }
-    
-    return keys;
-  } catch (error) {
-    console.error('Error retrieving patient keys:', error);
-    return generatePatientKeyPair();
-  }
-};
-
 export {
   encryptFileWithPassphrase,
-  decryptFileWithPassphrase,
-  generatePatientKeyPair,
-  getPatientKeys
+  decryptFileWithPassphrase
 };

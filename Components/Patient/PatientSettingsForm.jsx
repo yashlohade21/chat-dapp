@@ -6,19 +6,6 @@ import { ChatAppContect } from '../../Context/ChatAppContext';
 
 const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initialFormData = null }) => {
   const { account, savePatientData, loadPatientData, patientDataLoading } = useContext(ChatAppContect);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    dob: '',
-    address: '',
-    phone: '',
-    medicalConditions: '',
-    allergies: '',
-    currentMedications: '',
-    emergencyContact: '',
-    insuranceProvider: '',
-    policyNumber: ''
-  });
   const [uploadedDocs, setUploadedDocs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,7 +18,7 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
         setLoading(true);
         const result = await loadPatientData(account);
         if (result && result.data) {
-          setFormData(result.data);
+          setUploadedDocs(result.data.documents || []);
         }
         const secureStorage = JSON.parse(localStorage.getItem('secureFileStorage') || '{}');
         const userDocs = Object.values(secureStorage).filter(doc => doc.owner === account);
@@ -46,13 +33,6 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
     loadData();
   }, [account, loadPatientData]);
 
-  const handleChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!account) {
@@ -61,24 +41,9 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
     }
     setError('');
     setSuccess('');
-    const validationErrors = [];
-    if (!formData.name) validationErrors.push("Name is required");
-    if (!formData.email) validationErrors.push("Email is required");
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      validationErrors.push("Invalid email format");
-    }
-    if (validationErrors.length > 0) {
-      setError(validationErrors.join(". "));
-      return;
-    }
+    
     try {
       setLoading(true);
-      // Save patient data securely on blockchain
-      const result = await savePatientData({
-        ...formData,
-        owner: account,
-        lastUpdated: Date.now()
-      });
       // Update local document storage if needed
       const secureStorage = JSON.parse(localStorage.getItem('secureFileStorage') || '{}');
       uploadedDocs.forEach(doc => {
@@ -103,7 +68,7 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
         }
       }
 
-      setSuccess('Medical information saved successfully!');
+      setSuccess('Medical documents updated successfully!');
       if (onDocumentsUpdate) {
         onDocumentsUpdate(uploadedDocs);
       }
@@ -115,7 +80,6 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
     }
   };
 
-  // Render the form along with appropriate loading and error messages
   return (
     <div className={styles.formContainer}>
       {error && (
@@ -141,26 +105,18 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
         {loading && (
           <div className={styles.loadingOverlay}>
             <div className={styles.spinner}></div>
-            <p>Encrypting and saving your information securely...</p>
+            <p>Saving your information securely...</p>
           </div>
         )}
-        {/* Render form fields for each patient detail */}
-        <div className={styles.formGroup}>
-          <label htmlFor="name">Full Name<span>*</span></label>
-          <input id="name" name="name" type="text" value={formData.name} onChange={handleChange} required placeholder="Enter your full name" />
-        </div>
-        <div className={styles.formGroup}>
-          <label htmlFor="email">Email<span>*</span></label>
-          <input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required placeholder="Enter your email address" />
-        </div>
-        {/* Additional form fields (dob, phone, address, etc.) */}
+        
         <div className={`${styles.formGroup} ${styles.fullWidth}`}>
           <label>Medical Documents</label>
           <MedicalFileUpload onUpload={(docs) => { setUploadedDocs(docs); onDocumentsUpdate?.(docs); }} account={account} />
         </div>
+
         <div className={`${styles.formGroup} ${styles.fullWidth}`}>
           <button type="submit" disabled={loading}>
-            {loading ? 'Saving...' : 'Save Medical Information'}
+            {loading ? 'Saving...' : 'Save Medical Documents'}
           </button>
         </div>
       </form>
