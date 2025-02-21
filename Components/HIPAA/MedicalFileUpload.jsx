@@ -137,6 +137,10 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       const uploadedFilesArray = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        const detectionResult = await documentDetectionService.detectFakeDocument(file);
+        if (!detectionResult.isReal) {
+          throw new Error(`The document ${file.name} failed authenticity check (Confidence: ${Math.round(detectionResult.confidence * 100)}%)`);
+        }
         setProgress((i / files.length) * 25);
 
         // Read file as ArrayBuffer
@@ -238,15 +242,19 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       let decryptionResult;
 
       while (decryptionAttempts < maxAttempts) {
-        decryptionResult = await decryptFileWithPassphrase(
-          response.data,
-          providedKey,
-          file.passphraseHash,
-          file.salt
-        );
+        try {
+          decryptionResult = await decryptFileWithPassphrase(
+            response.data,
+            providedKey,
+            file.passphraseHash,
+            file.salt
+          );
 
-        if (decryptionResult.success) {
-          break;
+          if (decryptionResult.success) {
+            break;
+          }
+        } catch (err) {
+          console.error(`Decryption attempt ${decryptionAttempts + 1} failed:`, err);
         }
 
         decryptionAttempts++;
@@ -255,8 +263,13 @@ const MedicalFileUpload = ({ onUpload, account }) => {
         }
       }
 
-      if (!decryptionResult.success) {
-        throw new Error(decryptionResult.error || "Decryption failed after multiple attempts");
+      if (!decryptionResult || !decryptionResult.success) {
+        throw new Error(decryptionResult?.error || "Decryption failed after multiple attempts");
+      }
+
+      // Validate decrypted data before setting
+      if (!decryptionResult.decryptedData) {
+        throw new Error("Decryption produced empty data");
       }
 
       setDecryptedFiles(prev => [...prev, {
@@ -409,6 +422,22 @@ const MedicalFileUpload = ({ onUpload, account }) => {
                       alt={file.name}
                       className={styles.decryptedImage}
                     />
+                  ) : file.type === 'application/pdf' ? (
+                    <object
+                      data={`data:${file.type};base64,${file.content}`}
+                      type="application/pdf"
+                      width="100%"
+                      height="600px"
+                      className={styles.pdfViewer}
+                    >
+                      <p>Unable to display PDF. <a 
+                        href={`data:${file.type};base64,${file.content}`}
+                        download={file.name}
+                        className={styles.downloadLink}
+                      >
+                        Download {file.name}
+                      </a></p>
+                    </object>
                   ) : (
                     <a 
                       href={`data:${file.type};base64,${file.content}`}

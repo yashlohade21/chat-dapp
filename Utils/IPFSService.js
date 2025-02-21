@@ -8,6 +8,12 @@ const IPFS_GATEWAYS = [
   'https://cloudflare-ipfs.com/ipfs/',
   'https://dweb.link/ipfs/'
 ];
+const PINATA_GATEWAY = [
+  'https://gateway.pinata.cloud/ipfs/',
+  'https://ipfs.io/ipfs/',
+  'https://cloudflare-ipfs.com/ipfs/',
+  'https://dweb.link/ipfs/'
+];
 
 const PINATA_API_KEY = process.env.NEXT_PUBLIC_PINATA_API_KEY;
 const PINATA_SECRET_KEY = process.env.NEXT_PUBLIC_PINATA_SECRET_KEY;
