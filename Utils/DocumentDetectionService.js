@@ -10,43 +10,58 @@ class DocumentDetectionService {
   async initialize() {
     if (this.initialized) return;
 
-    // Create a simple RNN model
-    this.model = tf.sequential();
-    
-    // Input layer - Changed to dense layer only since we don't need sequence processing
-    this.model.add(tf.layers.dense({
-      inputShape: [5],  // Match our 5 features
-      units: 32,
-      activation: 'relu'
-    }));
+    try {
+      // Dispose of any existing model
+      if (this.model) {
+        this.model.dispose();
+      }
 
-    // Additional dense layers instead of LSTM
-    this.model.add(tf.layers.dense({
-      units: 64,
-      activation: 'relu'
-    }));
+      // Create a simple model
+      this.model = tf.sequential();
+      
+      // Input layer - Changed to dense layer only since we don't need sequence processing
+      this.model.add(tf.layers.dense({
+        inputShape: [5],  // Match our 5 features
+        units: 32,
+        activation: 'relu',
+        name: 'input_layer'  // Add unique names to layers
+      }));
 
-    this.model.add(tf.layers.dense({
-      units: 32,
-      activation: 'relu'
-    }));
+      // Additional dense layers instead of LSTM
+      this.model.add(tf.layers.dense({
+        units: 64,
+        activation: 'relu',
+        name: 'hidden_layer_1'
+      }));
 
-    // Dense output layer
-    this.model.add(tf.layers.dense({
-      units: 1,
-      activation: 'sigmoid'
-    }));
+      this.model.add(tf.layers.dense({
+        units: 32,
+        activation: 'relu',
+        name: 'hidden_layer_2'
+      }));
 
-    // Compile the model
-    this.model.compile({
-      optimizer: 'adam',
-      loss: 'binaryCrossentropy',
-      metrics: ['accuracy']
-    });
+      // Dense output layer
+      this.model.add(tf.layers.dense({
+        units: 1,
+        activation: 'sigmoid',
+        name: 'output_layer'
+      }));
 
-    // Train the model with sample data
-    await this.trainModel();
-    this.initialized = true;
+      // Compile the model
+      this.model.compile({
+        optimizer: 'adam',
+        loss: 'binaryCrossentropy',
+        metrics: ['accuracy']
+      });
+
+      // Train the model with sample data
+      await this.trainModel();
+      this.initialized = true;
+    } catch (error) {
+      console.error('Error initializing model:', error);
+      this.initialized = false;
+      throw error;
+    }
   }
 
   async trainModel() {
@@ -97,19 +112,6 @@ class DocumentDetectionService {
       
       // Convert features to tensor
       const inputTensor = tf.tensor2d([features]);
-      
-      // Train or fine-tune the model with progress callback
-      await this.model.fit(inputTensor, tf.tensor2d([[1]]), {
-        epochs: 50,
-        callbacks: {
-          onEpochEnd: (epoch, logs) => {
-            this.accuracy = logs.acc;
-            if (onEpochProgress) {
-              onEpochProgress(epoch + 1, 50);
-            }
-          }
-        }
-      });
       
       // Make prediction
       const prediction = await this.model.predict(inputTensor).data();
@@ -187,4 +189,5 @@ class DocumentDetectionService {
   }
 }
 
+// Create a single instance
 export const documentDetectionService = new DocumentDetectionService();

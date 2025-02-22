@@ -1,5 +1,30 @@
 import CryptoJS from 'crypto-js';
 
+const arrayBufferToWordArray = (arrayBuffer) => {
+  const uint8Array = new Uint8Array(arrayBuffer);
+  const words = [];
+  for (let i = 0; i < uint8Array.length; i += 4) {
+    words.push(
+      (uint8Array[i] << 24) |
+      (uint8Array[i + 1] << 16) |
+      (uint8Array[i + 2] << 8) |
+      uint8Array[i + 3]
+    );
+  }
+  return CryptoJS.lib.WordArray.create(words, uint8Array.length);
+};
+
+const wordArrayToArrayBuffer = (wordArray) => {
+  const words = wordArray.words;
+  const sigBytes = wordArray.sigBytes;
+  const u8 = new Uint8Array(sigBytes);
+  for (let i = 0; i < sigBytes; i++) {
+    const byte = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+    u8[i] = byte;
+  }
+  return u8.buffer;
+};
+
 const encryptFileWithPassphrase = async (fileData, passphrase) => {
   try {
     if (!fileData || !passphrase) {
@@ -18,16 +43,17 @@ const encryptFileWithPassphrase = async (fileData, passphrase) => {
     // Convert ArrayBuffer to WordArray
     let wordArray;
     if (fileData instanceof ArrayBuffer) {
-      const uint8Array = new Uint8Array(fileData);
-      wordArray = CryptoJS.lib.WordArray.create(uint8Array);
+      wordArray = arrayBufferToWordArray(fileData);
     } else if (typeof fileData === 'string') {
       wordArray = CryptoJS.enc.Base64.parse(fileData);
     } else {
       throw new Error('Unsupported file data format');
     }
 
-    // Important: Use key.toString() consistently in both encryption and decryption
+    // Encrypt using AES
     const encrypted = CryptoJS.AES.encrypt(wordArray, key.toString());
+    
+    // Generate verification hash
     const passphraseHash = CryptoJS.SHA256(passphrase + salt.toString()).toString();
 
     return {
@@ -48,32 +74,25 @@ const decryptFileWithPassphrase = async (encryptedData, passphrase, expectedHash
       throw new Error('Missing required decryption parameters');
     }
 
-    // Verify passphrase using hash
     const providedHash = CryptoJS.SHA256(passphrase + salt).toString();
     if (providedHash !== expectedHash) {
       throw new Error("Invalid decryption key");
     }
 
-    // Recreate key using PBKDF2 - use exact same parameters as encryption
     const key = CryptoJS.PBKDF2(passphrase, salt, {
       keySize: 256/32,
       iterations: 1000
     });
 
     try {
-      // Important: Use key.toString() to match encryption
       const decrypted = CryptoJS.AES.decrypt(encryptedData, key.toString());
-      
-      // Verify decrypted data
       if (!decrypted || decrypted.sigBytes <= 0) {
         throw new Error("Decryption produced invalid data");
       }
 
-      // Convert to base64
-      const base64String = decrypted.toString(CryptoJS.enc.Base64);
-      if (!base64String) {
-        throw new Error("Failed to convert decrypted data to base64");
-      }
+      // Convert to ArrayBuffer for consistent binary handling
+      const arrayBuffer = wordArrayToArrayBuffer(decrypted);
+      const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
       return { success: true, decryptedData: base64String };
     } catch (e) {

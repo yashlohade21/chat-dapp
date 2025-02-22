@@ -105,6 +105,15 @@ IPFS is used for decentralized file storage:
 - Always verify decryption key using hash before attempting decryption
 - Handle binary data conversion consistently throughout the process
 
+## TensorFlow.js Best Practices
+- Give unique names to layers to prevent registration conflicts
+- Dispose of models and tensors when no longer needed
+- Initialize models only once and reuse the instance
+- Clean up tensors after predictions to prevent memory leaks
+- Use a singleton pattern for model services
+- Handle model initialization errors gracefully
+- Avoid reinitializing models during file processing
+
 In the modern digital landscape, privacy, security, and control over personal data have become more critical than ever. Traditional messaging platforms rely on centralized servers that store user data, creating potential vulnerabilities and concerns related to data ownership, privacy breaches, and censorship. With the growing concerns surrounding data security and privacy, especially in sensitive sectors like healthcare, there is an urgent need for a more secure and private alternative to conventional messaging systems. De-Chat is a decentralized chat application designed to address these challenges by utilizing blockchain technology to create a secure, transparent, and user-controlled communication platform. Specifically tailored for smart healthcare systems, De-Chat offers a platform for confidential communication that ensures the privacy and integrity of messages.
 
 # Implementation Status
@@ -409,3 +418,12 @@ The encryption system provides:
 - Verification of decryption keys
 - Protection against common attacks
 - Safe storage of encrypted data on IPFS
+
+## TensorFlow.js Best Practices
+- Give unique names to layers to prevent registration conflicts
+- Dispose of models and tensors when no longer needed
+- Initialize models only once and reuse the instance
+- Clean up tensors after predictions to prevent memory leaks
+- Use a singleton pattern for model services
+- Handle model initialization errors gracefully
+- Avoid reinitializing models during file processing

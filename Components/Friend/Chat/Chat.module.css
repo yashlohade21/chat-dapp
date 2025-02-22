@@ -6,7 +6,9 @@
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
-}
+  display: flex;
+  flex-direction: column;}
+
 
 @media (min-width: 768px) {
   .Chat {
@@ -81,6 +83,9 @@
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 70px;
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: rgba(241, 131, 3, 0.3) rgba(255, 255, 255, 0.05); /* For Firefox */
 }
 
 @media (min-width: 768px) {
@@ -104,6 +109,7 @@
   flex-direction: column;
   gap: 1rem;
   max-width: 100%;
+  min-height: 100%;
 }
 
 .Chat_box_left_title {
@@ -143,7 +149,7 @@
   margin-left: 4rem;
   position: relative;
   border: 1px solid rgba(241, 131, 3, 0.2);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   line-height: 1.5;
   font-size: 1rem;
   white-space: pre-line;
@@ -340,25 +346,22 @@
   margin-bottom: 0.5rem;
 }
 
-/* Improve scrollbar styling */
+/* Make scrollbar always visible and styled */
 .Chat_box_box::-webkit-scrollbar {
-  width: 4px;
-}
-
-@media (min-width: 768px) {
-  .Chat_box_box::-webkit-scrollbar {
-    width: 6px;
-  }
+  width: 6px;
+  display: block !important;
 }
 
 .Chat_box_box::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 2px;
+  border-radius: 3px;
+  margin: 4px 0;
 }
 
 .Chat_box_box::-webkit-scrollbar-thumb {
   background: rgba(241, 131, 3, 0.3);
-  border-radius: 2px;
+  border-radius: 3px;
+  border: 1px solid rgba(241, 131, 3, 0.2);
 }
 
 .Chat_box_box::-webkit-scrollbar-thumb:hover {
@@ -430,18 +433,6 @@
   position: relative;
   border: 1px solid rgba(241, 131, 3, 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  animation: modalSlideIn 0.3s ease;
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .modal_content h3 {
@@ -745,7 +736,7 @@
 
 .close_btn {
   background: transparent;
-  border: 1px solid #f18303;
+  border: 1px solid #f18313;
   color: #f18303;
 }
 
@@ -757,18 +748,24 @@
 /* Add styles for AI actions */
 .ai_actions {
   display: flex;
-  gap: 8px;
-  margin-right: 10px;
+  gap: 0.8rem;
+  padding-right: 1.5rem;
+  border-right: 1px solid rgba(241, 131, 3, 0.2);
 }
 
 .ai_button {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 5px;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(241, 131, 3, 0.1);
+  border: 1px solid rgba(241, 131, 3, 0.2);
   border-radius: 50%;
-  transition: background-color 0.2s;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
 .ai_button:hover {
@@ -883,7 +880,6 @@
   top: -12px;
   right: -12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  animation: fadeIn 0.3s ease;
 }
 
 .metrics_chart {
@@ -891,7 +887,6 @@
   border-radius: 12px;
   padding: 1.2rem;
   border: 1px solid rgba(241, 131, 3, 0.15);
-  animation: slideUp 0.3s ease;
 }
 
 .metrics_chart h4 {
@@ -907,28 +902,21 @@
 }
 
 .Chat_box_send_wrapper {
-  display: flex;
-  gap: 1.5rem;
-  width: 100%;
   position: relative;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 16px;
-  border: 1px solid rgba(241, 131, 3, 0.15);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 1rem;
+  width: 100%;
 }
 
 .Chat_box_send_input {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  flex: 2;
+  border-radius: 16px;
+  padding: 0.8rem;
   border: 1px solid rgba(241, 131, 3, 0.2);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
 }
 
 .Chat_box_send_input:focus-within {
@@ -945,31 +933,8 @@
   padding: 1.2rem;
   border: 1px solid rgba(241, 131, 3, 0.2);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  animation: slideIn 0.3s ease;
   backdrop-filter: blur(10px);
   margin-left: 1rem;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 .translation_container {
@@ -1026,7 +991,6 @@
   position: relative;
   border: 1px solid rgba(241, 131, 3, 0.15);
   margin-bottom: 1rem;
-  animation: fadeIn 0.3s ease;
 }
 
 .translation_text {
@@ -1051,7 +1015,6 @@
   top: -12px;
   right: -12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  animation: fadeIn 0.3s ease;
   z-index: 1;
 }
 
@@ -1148,3 +1111,212 @@
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+.sentiment_indicator {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  padding: 4px 12px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #fff;
+  z-index: 10;
+}
+
+.sentiment_text {
+  text-transform: capitalize;
+}
+
+/* New notification styles */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #fff;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.notification_error {
+  background: linear-gradient(135deg, #ff4444, #cc0000);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.notification_warning {
+  background: linear-gradient(135deg, #ffbb33, #ff8800);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.notification_success {
+  background: linear-gradient(135deg, #00C851, #007E33);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.notification_close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 0.5rem;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.notification_close:hover {
+  opacity: 1;
+}
+
+/* New side panel styles */
+.side_panel {
+  position: absolute;
+  right: -420px;
+  top: 0;
+  width: 400px;
+  background: rgba(41, 47, 63, 0.95);
+  border-radius: 16px;
+  border: 1px solid rgba(241, 131, 3, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 200px);
+  overflow: hidden;
+}
+
+.panel_header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(241, 131, 3, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(145deg, rgba(241, 131, 3, 0.1), rgba(241, 131, 3, 0.05));
+}
+
+.panel_header h3 {
+  color: #f18303;
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.panel_close {
+  background: none;
+  border: none;
+  color: #f18303;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  opacity: 0.8;
+  transition: all 0.2s;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel_close:hover {
+  opacity: 1;
+  background: rgba(241, 131, 3, 0.1);
+}
+
+.panel_content {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.recommendation_item {
+  padding: 1.2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(241, 131, 3, 0.15);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  color: #fff;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.recommendation_item:hover {
+  background: rgba(241, 131, 3, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.chatbot_response {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(241, 131, 3, 0.15);
+  border-radius: 12px;
+  color: #fff;
+  line-height: 1.6;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+/* Add these new styles */
+
+.chatbot_suggestions {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.suggestion_btn {
+  padding: 0.6rem 1rem;
+  background: rgba(241, 131, 3, 0.1);
+  border: 1px solid rgba(241, 131, 3, 0.2);
+  border-radius: 20px;
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.suggestion_btn:hover {
+  background: rgba(241, 131, 3, 0.2);
+  transform: translateY(-2px);
+}
+
+.recommendation_actions {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.action_btn {
+  padding: 0.5rem 1rem;
+  background: rgba(241, 131, 3, 0.1);
+  border: 1px solid rgba(241, 131, 3, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.action_btn:hover {
+  background: rgba(241, 131, 3, 0.2);
+  transform: translateY(-2px);
+}
+
+/* ... rest of existing code ... */

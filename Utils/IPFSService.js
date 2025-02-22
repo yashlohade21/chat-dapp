@@ -62,16 +62,6 @@ export const IPFSService = {
         fileSize: file.size
       });
 
-      // Log the request configuration
-      console.log('Request configuration:', {
-        url: PINATA_API_URL,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'pinata_api_key': 'CONFIGURED',
-          'pinata_secret_api_key': 'CONFIGURED'
-        }
-      });
-
       const response = await axios.post(PINATA_API_URL, formData, {
         maxBodyLength: Infinity,
         headers: {
@@ -109,6 +99,8 @@ export const IPFSService = {
     for (const gateway of IPFS_GATEWAYS) {
       for (let i = 0; i < retries; i++) {
         try {
+          console.log(`Attempting to fetch from gateway: ${gateway}, attempt ${i + 1}`);
+          
           const response = await axios.get(`${gateway}${cid}`, {
             timeout: 15000,
             responseType: 'arraybuffer',
@@ -118,14 +110,18 @@ export const IPFSService = {
           });
           
           if (!response.data || response.data.length === 0) {
+            console.error('Empty response from IPFS');
             throw new Error('Empty response from IPFS');
           }
+          
+          console.log(`Successfully fetched file from ${gateway}, size: ${response.data.length} bytes`);
           
           const base64Data = Buffer.from(response.data).toString('base64');
           
           return {
             success: true,
-            data: base64Data
+            data: base64Data,
+            gateway: gateway
           };
         } catch (error) {
           console.error(`IPFS fetch attempt ${i + 1} failed for gateway ${gateway}:`, error);

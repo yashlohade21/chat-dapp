@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, memo, useCallback } from "react";
+import React, { useEffect, useState, useRef, memo, useCallback, useContext } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import {
@@ -19,6 +19,7 @@ import { Loader } from "../../index";
 import { IPFSService } from "../../../Utils/IPFSService";
 import { encryptFileWithPassphrase, decryptFileWithPassphrase } from "../../../Utils/CryptoService";
 import CryptoJS from "crypto-js";
+import { ChatAppContect } from "../../../Context/ChatAppContext";
 
 const MetricsChart = React.memo(({ data }) => (
   <div className={Style.metrics_chart}>
@@ -147,18 +148,48 @@ const DecryptionKeyModal = ({ show, onClose, decryptionKey }) => {
   );
 };
 
-const Chat = ({
-  functionName,
-  readMessage,
-  friendMsg,
-  account,
-  userName,
-  loading,
-  currentUserName,
-  currentUserAddress,
-  readUser,
-}) => {
+const ChatbotPanel = ({ response, onClose }) => (
+  <div className={Style.side_panel}>
+    <div className={Style.panel_header}>
+      <h3>AI Assistant</h3>
+      <button onClick={onClose} className={Style.panel_close}>×</button>
+    </div>
+    <div className={Style.panel_content}>
+      <div className={Style.chatbot_response}>
+        {response}
+      </div>
+      <div className={Style.chatbot_suggestions}>
+        <button className={Style.suggestion_btn}>Tell me more</button>
+        <button className={Style.suggestion_btn}>Give an example</button>
+        <button className={Style.suggestion_btn}>Explain differently</button>
+      </div>
+    </div>
+  </div>
+);
+
+const RecommendationsPanel = ({ recommendations, onClose }) => (
+  <div className={Style.side_panel}>
+    <div className={Style.panel_header}>
+      <h3>Smart Suggestions</h3>
+      <button onClick={onClose} className={Style.panel_close}>×</button>
+    </div>
+    <div className={Style.panel_content}>
+      {recommendations.map((rec, index) => (
+        <div key={index} className={Style.recommendation_item}>
+          <p>{rec}</p>
+          <div className={Style.recommendation_actions}>
+            <button className={Style.action_btn}>Use</button>
+            <button className={Style.action_btn}>Modify</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const Chat = ({ currentAccount, currentUser, currentFriend }) => {
   const router = useRouter();
+  const { readMessage, readUser, sendMessage, friendMsg, loading, userName, account } = useContext(ChatAppContect);
   const [message, setMessage] = useState("");
   const [showTranslation, setShowTranslation] = useState(false);
   const [translatedMessage, setTranslatedMessage] = useState("");
@@ -184,6 +215,12 @@ const Chat = ({
   const [sentiment, setSentiment] = useState(null);
   const [showPHIWarning, setShowPHIWarning] = useState(false);
   const [chatData, setChatData] = useState({ address: "", name: "" });
+  const [chatBoxRef, setChatBoxRef] = useState(null);
+  const [notification, setNotification] = useState(null);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
+  const [showChatbotResponse, setShowChatbotResponse] = useState(false);
+  const [chatbotResponse, setChatbotResponse] = useState('');
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -264,11 +301,11 @@ const Chat = ({
   }, []);
 
   const handleSendMessage = useCallback(async () => {
-    if (!message.trim() || localLoading) return;
+    if (!message.trim() || loading) return;
     
     try {
       setLocalLoading(true);
-      await functionName({
+      await sendMessage({
         msg: message,
         address: chatData.address,
       });
@@ -282,7 +319,7 @@ const Chat = ({
     } finally {
       setLocalLoading(false);
     }
-  }, [message, localLoading, functionName, chatData.address]);
+  }, [message, loading, sendMessage, chatData.address]);
 
   const handleAppointmentSubmit = async (e) => {
     e.preventDefault();
@@ -299,7 +336,7 @@ const Chat = ({
 ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
 🚨 Urgency: ${appointmentData.urgency.toUpperCase()}`;
       
-      await functionName({
+      await sendMessage({
         msg: appointmentMsg,
         address: currentUserAddress,
       });
@@ -384,7 +421,7 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
           }
 
           const msg = `[ENC_FILE]${file.name}|${result.url}|${passphraseHash}|${salt}`;
-          await functionName({
+          await sendMessage({
             msg,
             address: chatData.address,
           });
@@ -457,19 +494,51 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
       const isPDF = name.match(/\.pdf$/i);
       
       if (isImage) {
-        const img = new Image();
+        const img = document.createElement('img');
         img.src = `data:image/${name.split('.').pop()};base64,${decryptResult.decryptedData}`;
-        const win = window.open("");
-        win.document.write(img.outerHTML);
+        const win = window.open("", "_blank");
+        win.document.write(`
+          <html>
+            <head>
+              <title>${name}</title>
+              <style>
+                body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #292F3F; }
+                img { max-width: 100%; max-height: 100vh; object-fit: contain; }
+              </style>
+            </head>
+            <body>
+              ${img.outerHTML}
+            </body>
+          </html>
+        `);
       } else if (isPDF) {
-        window.open(`data:application/pdf;base64,${decryptResult.decryptedData}`, '_blank');
+        const pdfBlob = new Blob([decryptResult.decryptedData], { type: 'application/pdf' });
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        const win = window.open("", "_blank");
+        win.document.write(`
+          <html>
+            <head>
+              <title>${name}</title>
+              <style>
+                body { margin: 0; }
+                iframe { border: none; width: 100vw; height: 100vh; }
+              </style>
+            </head>
+            <body>
+              <iframe src="${pdfUrl}#toolbar=0" type="application/pdf"></iframe>
+            </body>
+          </html>
+        `);
       } else {
+        const fileBlob = new Blob([decryptResult.decryptedData], { type: file.type || 'application/octet-stream' });
+        const downloadUrl = URL.createObjectURL(fileBlob);
         const link = document.createElement('a');
-        link.href = `data:application/octet-stream;base64,${decryptResult.decryptedData}`;
+        link.href = downloadUrl;
         link.download = name;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
       }
     } catch (error) {
       console.error('Decryption error:', error);
@@ -489,23 +558,114 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
     alert("Chat Summary:\n" + summary);
   };
 
-  const messagesEndRef = useRef(null);
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    const metrics = AIService.getHistoricalMetrics();
-    setHistoricalMetrics(metrics);
+  const handleChatbotQuery = useCallback(async () => {
+    try {
+      const response = await AIService.chatbotResponse("How can I help?");
+      setChatbotResponse(response);
+      setShowChatbotResponse(true);
+    } catch (error) {
+      console.error("Chatbot error:", error);
+      setNotification({
+        type: 'error',
+        message: error.message || "An error occurred while fetching the chatbot response."
+      });
+    }
   }, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [friendMsg]);
+  const handleTextPrediction = useCallback(() => {
+    if (!message.trim()) {
+      setNotification({
+        type: 'warning',
+        message: 'Please type some text for prediction'
+      });
+      return;
+    }
+    try {
+      const predicted = AIService.textPrediction(message);
+      setMessage(predicted);
+    } catch (error) {
+      console.error("Text prediction error:", error);
+      setNotification({
+        type: 'error',
+        message: error.message || "An error occurred while predicting text."
+      });
+    }
+  }, [message]);
+
+  const handlePersonalizedRecommendations = useCallback(() => {
+    try {
+      const conversation = friendMsg.map(m => m.msg).join(" ");
+      const recs = AIService.personalizedRecommendations(userName, conversation);
+      setRecommendations(recs);
+      setShowRecommendations(true);
+    } catch (error) {
+      console.error("Recommendations error:", error);
+      setNotification({
+        type: 'error',
+        message: error.message
+      });
+    }
+  }, [friendMsg, userName]);
+
+  const Notification = ({ type, message, onClose }) => {
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        onClose(); // Automatically close the notification after 5 seconds
+      }, 15000);
+  
+      return () => clearTimeout(timer); // Cleanup the timer on unmount
+    }, [onClose]);
+  
+    return (
+      <div className={`${Style.notification} ${Style[`notification_${type}`]}`}>
+        <span>{message}</span>
+        <button onClick={onClose} className={Style.notification_close}>×</button>
+      </div>
+    );
+  };
+
+  const RecommendationsPanel = ({ recommendations, onClose }) => (
+    <div className={Style.side_panel}>
+      <div className={Style.panel_header}>
+        <h3>Smart Suggestions</h3>
+        <button onClick={onClose} className={Style.panel_close}>×</button>
+      </div>
+      <div className={Style.panel_content}>
+        {recommendations.map((rec, index) => (
+          <div key={index} className={Style.recommendation_item}>
+            <p>{rec}</p>
+            <div className={Style.recommendation_actions}>
+              <button className={Style.action_btn}>Use</button>
+              <button className={Style.action_btn}>Modify</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const ChatbotPanel = ({ response, onClose }) => (
+    <div className={Style.side_panel}>
+      <div className={Style.panel_header}>
+        <h3>AI Assistant</h3>
+        <button onClick={onClose} className={Style.panel_close}>×</button>
+      </div>
+      <div className={Style.panel_content}>
+        <div className={Style.chatbot_response}>
+          {response}
+        </div>
+        <div className={Style.chatbot_suggestions}>
+          <button className={Style.suggestion_btn}>Tell me more</button>
+          <button className={Style.suggestion_btn}>Give an example</button>
+          <button className={Style.suggestion_btn}>Explain differently</button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className={Style.Chat}>
-      {currentUserName && currentUserAddress ? (
+      {userName && account ? (
         <div className={Style.Chat_user_info}>
           <Image 
             src={images.accountName} 
@@ -515,13 +675,15 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
             className={Style.profile_image}
           />
           <div className={Style.Chat_user_info_box}>
-            <h4>{currentUserName}</h4>
-            <p className={Style.show}>{currentUserAddress}</p>
+            <h4>{userName}</h4>
+            <p className={Style.show}>{account}</p>
           </div>
         </div>
       ) : null}
 
-      <div className={Style.Chat_box_box}>
+      <div className={Style.Chat_box_box}
+        ref={setChatBoxRef}
+      >
         <div className={Style.Chat_box}>
           <div className={Style.Chat_box_left}>
             {friendMsg.length > 0 ? (
@@ -601,12 +763,11 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                 <p>Start the conversation by sending a message or scheduling an appointment!</p>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
         </div>
       </div>
 
-      {currentUserName && currentUserAddress && (
+      {userName && account && (
         <div className={Style.Chat_box_send}>
           <div className={Style.Chat_box_send_wrapper}>
             <div className={Style.Chat_box_send_input}>
@@ -625,6 +786,34 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                 >
                   🌐
                 </button>
+                <button
+                  onClick={() => setShowAppointmentForm(true)}
+                  className={Style.ai_button}
+                  title="Schedule Appointment"
+                >
+                  📅
+                </button>
+                <button
+                  onClick={handleChatbotQuery}
+                  className={Style.ai_button}
+                  title="AI Assistant"
+                >
+                  🤖
+                </button>
+                <button
+                  onClick={handleTextPrediction}
+                  className={Style.ai_button}
+                  title="Smart Complete"
+                >
+                  ✨
+                </button>
+                <button
+                  onClick={handlePersonalizedRecommendations}
+                  className={Style.ai_button}
+                  title="Get Suggestions"
+                >
+                  💡
+                </button>
               </div>
 
               <input
@@ -641,6 +830,15 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                 disabled={localLoading || loading}
                 className={`${Style.message_input} ${localLoading || loading ? Style.input_disabled : ''}`}
               />
+
+              {message.length > 0 && sentiment && (
+                <div className={Style.sentiment_indicator}>
+                  {sentiment === 'positive' && '😊'}
+                  {sentiment === 'negative' && '😔'}
+                  {sentiment === 'neutral' && '😐'}
+                  <span className={Style.sentiment_text}>{sentiment}</span>
+                </div>
+              )}
 
               <div className={Style.send_actions}>
                 <div className={Style.file_upload}>
@@ -682,6 +880,20 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                 )}
               </div>
             </div>
+
+            {showRecommendations && (
+              <RecommendationsPanel
+                recommendations={recommendations}
+                onClose={() => setShowRecommendations(false)}
+              />
+            )}
+
+            {showChatbotResponse && (
+              <ChatbotPanel
+                response={chatbotResponse}
+                onClose={() => setShowChatbotResponse(false)}
+              />
+            )}
 
             {showTranslation && (
               <div className={Style.translation_side_panel}>
@@ -808,6 +1020,14 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
           </div>
         </div>
       )}
+
+    {notification && (
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification(null)} // Clear the notification
+      />
+    )}
 
       <DecryptionKeyModal
         show={showKeyModal}

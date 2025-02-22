@@ -219,5 +219,27 @@ export const AIService = {
       confidence: 0.70 + Math.random() * 0.30,
       timestamp: now - (i * 24 * 60 * 60 * 1000)
     }));
+  },
+
+  // New method: Personalized Recommendations
+  personalizedRecommendations: (userId, conversation) => {
+    // Placeholder logic for personalized recommendations.
+    return [
+      "How can I assist you further?",
+      "Would you like some additional details?",
+      "Is there anything else I can help with?"
+    ];
+  },
+
+  // New method: Text Prediction
+  textPrediction: (text) => {
+    // Append a predictive phrase as a placeholder.
+    return text + " ... and perhaps that's what you'll say next.";
+  },
+
+  // New method: Chatbot Response
+  chatbotResponse: async (query) => {
+    // Simulate an automated chatbot response.
+    return Promise.resolve("Automated response to '" + query + "'");
   }
 };

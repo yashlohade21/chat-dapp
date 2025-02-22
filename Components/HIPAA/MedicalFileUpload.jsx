@@ -11,10 +11,12 @@ const allowedFileTypes = [
   'image/png',
   'application/dicom',
   'image/gif',
-  '.dcm'
+  '.dcm',
+  'application/zip',
+  'application/x-zip-compressed'
 ];
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // Increased to 50MB to accommodate ZIP files
 
 const arrayBufferToBase64 = (buffer) => {
   if (!buffer) {
@@ -59,11 +61,12 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       const invalidFiles = selectedFiles.filter(file => !allowedFileTypes.includes(file.type));
       const oversizedFiles = selectedFiles.filter(file => file.size > MAX_FILE_SIZE);
       if (invalidFiles.length > 0) {
-        setError('Some files have invalid types. Please upload only supported file types.');
+        setError(`Some files have invalid types. Allowed types: PDF, ZIP, Images. Invalid files: ${invalidFiles.map(f => f.name).join(', ')}`);
         return;
       }
       if (oversizedFiles.length > 0) {
-        setError('Some files exceed the 10MB size limit.');
+        setError(`Some files exceed the 50MB size limit: ${oversizedFiles.map(f => f.name).join(', ')}`);
+        setError('Some files exceed the 50MB size limit.');
         return;
       }
       setFiles(selectedFiles);
@@ -95,11 +98,12 @@ const MedicalFileUpload = ({ onUpload, account }) => {
     const oversizedFiles = selectedFiles.filter(file => file.size > MAX_FILE_SIZE);
     
     if (invalidFiles.length > 0) {
-      setError('Some files have invalid types. Please upload only supported file types.');
+      setError(`Some files have invalid types. Allowed types: PDF, ZIP, Images. Invalid files: ${invalidFiles.map(f => f.name).join(', ')}`);
       return;
     }
     if (oversizedFiles.length > 0) {
-      setError('Some files exceed the 10MB size limit.');
+      setError(`Some files exceed the 50MB size limit: ${oversizedFiles.map(f => f.name).join(', ')}`);
+      setError('Some files exceed the 50MB size limit.');
       return;
     }
     setFiles(selectedFiles);
@@ -157,8 +161,8 @@ const MedicalFileUpload = ({ onUpload, account }) => {
           throw new Error(encryptResult.error || "Encryption failed");
         }
 
-        const encryptedBlob = new Blob([encryptResult.encryptedData], { type: file.type });
-        const encryptedFile = new File([encryptedBlob], file.name, { type: file.type });
+        const encryptedBlob = new Blob([encryptResult.encryptedData], { type: 'application/octet-stream' });
+        const encryptedFile = new File([encryptedBlob], file.name, { type: 'application/octet-stream' });
 
         const result = await IPFSService.uploadFile(encryptedFile);
         if (!result.success) {
@@ -234,11 +238,14 @@ const MedicalFileUpload = ({ onUpload, account }) => {
     setError('');
 
     try {
+      console.log('Fetching file from IPFS:', file.cid);
       const response = await IPFSService.getFile(file.cid);
       if (!response.success) {
-        throw new Error(`Failed to fetch file ${file.name} from IPFS`);
+        throw new Error(`Failed to fetch file ${file.name} from IPFS: ${response.error}`);
       }
+      console.log('File fetched successfully from gateway:', response.gateway);
 
+      console.log('Attempting decryption...');
       const decryptionResult = await decryptFileWithPassphrase(
         response.data,
         providedKey,
@@ -249,28 +256,82 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       if (!decryptionResult.success) {
         throw new Error(decryptionResult.error || "Decryption failed");
       }
+      console.log('Decryption successful');
 
-      const arrayBuffer = base64ToArrayBuffer(decryptionResult.decryptedData);
-      const blob = new Blob([arrayBuffer], { type: file.type });
+      // Convert base64 to blob
+      console.log('Converting decrypted data to binary...');
+      const binaryString = window.atob(decryptionResult.decryptedData);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      console.log('Creating blob with type:', file.type);
+      const blob = new Blob([bytes], { type: file.type });
       const url = URL.createObjectURL(blob);
+      console.log('Created object URL:', url);
 
-      setDecryptedFiles(prev => {
-        prev.forEach(oldFile => {
-          if (oldFile.content && oldFile.content.startsWith('blob:')) {
-            URL.revokeObjectURL(oldFile.content);
-          }
-        });
-        
-        return [...prev.filter(f => f.cid !== file.cid), {
-          cid: file.cid,
-          name: file.name,
-          type: file.type,
-          content: url
-        }];
-      });
+      if (file.type === 'application/pdf') {
+        console.log('Opening PDF in new window');
+        const win = window.open('', '_blank');
+        if (!win) {
+          throw new Error('Popup blocked - please allow popups for this site');
+        }
+        win.document.write(`
+          <html>
+            <head>
+              <title>${file.name}</title>
+              <style>
+                body { margin: 0; }
+                iframe { border: none; width: 100vw; height: 100vh; }
+              </style>
+            </head>
+            <body>
+              <iframe src="${url}#toolbar=0" type="application/pdf"></iframe>
+            </body>
+          </html>
+        `);
+        win.document.close();
+      } else if (file.type.startsWith('image/')) {
+        console.log('Opening image in new window');
+        const win = window.open('', '_blank');
+        if (!win) {
+          throw new Error('Popup blocked - please allow popups for this site');
+        }
+        win.document.write(`
+          <html>
+            <head>
+              <title>${file.name}</title>
+              <style>
+                body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #292F3F; }
+                img { max-width: 100%; max-height: 100vh; object-fit: contain; }
+              </style>
+            </head>
+            <body>
+              <img src="${url}" alt="${file.name}" />
+            </body>
+          </html>
+        `);
+        win.document.close();
+      } else {
+        console.log('Initiating file download');
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      // Clean up URLs after a delay to ensure they're loaded
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        console.log('Cleaned up object URL');
+      }, 1000);
+
     } catch (err) {
       console.error('Decryption error:', err);
-      setError('Error decrypting file. Please make sure you entered the correct key.');
+      setError(`Error: ${err.message || 'Failed to decrypt file'}. Please make sure you entered the correct key.`);
     } finally {
       setDecrypting(false);
     }
@@ -317,14 +378,16 @@ const MedicalFileUpload = ({ onUpload, account }) => {
             multiple
             onChange={(e) => handleFiles(Array.from(e.target.files || []))}
             accept={allowedFileTypes.join(',')}
-            disabled={uploading}
-            className={styles.fileInput}
           />
         </div>
 
         <div className={styles.uploadInfo}>
-          <p>Accepted formats: PDF, JPEG, PNG, GIF, DICOM</p>
-          <p>Maximum file size: 10MB</p>
+          <p>Accepted formats: PDF, ZIP, Images</p>
+          <p>Maximum file size: 50MB</p>
+            disabled={uploading}
+            className={styles.fileInput}
+          <p>Accepted formats: PDF, JPEG, PNG, GIF, DICOM, ZIP</p>
+          <p>Maximum file size: 50MB</p>
         </div>
 
         {files.length > 0 && (
