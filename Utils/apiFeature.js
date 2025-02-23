@@ -57,8 +57,14 @@ const fetchContract = (signerOrProvider) =>
 export const connectingWithContract = async (retries = 3) => {
   for (let i = 0; i < retries; i++) {
     try {
-      const web3modal = new Web3Modal();
-      const connection = await web3modal.connect();
+      // Initialize Web3Modal with options
+      const web3Modal = new Web3Modal({
+        network: "polygon_amoy", // optional
+        cacheProvider: true, // optional
+        providerOptions: {} // required - empty for MetaMask only
+      });
+      
+      const connection = await web3Modal.connect();
       const provider = new ethers.providers.Web3Provider(connection);
       const signer = provider.getSigner();
       const contract = fetchContract(signer);

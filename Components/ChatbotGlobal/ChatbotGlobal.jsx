@@ -7,27 +7,49 @@ const ChatbotGlobal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
-  const { userName } = useContext(ChatAppContect);
+  const [isTyping, setIsTyping] = useState(false);
+  const [error, setError] = useState(null);
+  const { userName } = useContext(ChatAppContect) || {};
 
   const handleSendMessage = useCallback(async () => {
     if (!inputValue.trim()) return;
 
-    // Add user message
-    setMessages(prev => [...prev, { type: 'user', text: inputValue }]);
-    
     try {
+      setError(null);
+      // Add user message
+      const userMessage = { type: 'user', text: inputValue };
+      setMessages(prev => [...prev, userMessage]);
+      
+      // Clear input and show typing indicator
+      setInputValue('');
+      setIsTyping(true);
+
+      // Get chatbot response
       const response = await AIService.chatbotResponse(inputValue);
-      setMessages(prev => [...prev, { type: 'bot', text: response }]);
+      
+      // Add bot response with slight delay for natural feel
+      setTimeout(() => {
+        setMessages(prev => [...prev, { type: 'bot', text: response }]);
+        setIsTyping(false);
+      }, 500);
+      
     } catch (error) {
       console.error('Chatbot error:', error);
+      setError(error.message || 'An error occurred while processing your message');
       setMessages(prev => [...prev, { 
         type: 'error', 
         text: 'Sorry, I encountered an error. Please try again.' 
       }]);
+      setIsTyping(false);
     }
-    
-    setInputValue('');
   }, [inputValue]);
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
   if (!isOpen) {
     return (
@@ -49,6 +71,12 @@ const ChatbotGlobal = () => {
       </div>
 
       <div className={Style.messages_container}>
+        {error && (
+          <div className={Style.error_message}>
+            {error}
+          </div>
+        )}
+        
         {messages.length === 0 ? (
           <div className={Style.welcome_message}>
             <span className={Style.bot_avatar}>🤖</span>
@@ -65,6 +93,13 @@ const ChatbotGlobal = () => {
             </div>
           ))
         )}
+        
+        {isTyping && (
+          <div className={`${Style.message} ${Style.bot}`}>
+            <span className={Style.bot_avatar}>🤖</span>
+            <p className={Style.typing_indicator}>typing...</p>
+          </div>
+        )}
       </div>
 
       <div className={Style.input_container}>
@@ -72,17 +107,15 @@ const ChatbotGlobal = () => {
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
+          onKeyPress={handleKeyPress}
           placeholder="Type your message..."
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              handleSendMessage();
-            }
-          }}
+          className={Style.input}
+          aria-label="Chat message"
         />
         <button 
           onClick={handleSendMessage}
           className={Style.send_btn}
-          disabled={!inputValue.trim()}
+          disabled={!inputValue.trim() || isTyping}
         >
           Send
         </button>

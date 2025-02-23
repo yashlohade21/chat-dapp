@@ -1,0 +1,43 @@
+{
+  "conversations": [
+    {
+      "input": "Hello",
+      "response": "Hi! How can I assist you today with your healthcare communications?",
+      "category": "greeting"
+    },
+    {
+      "input": "How are you?",
+      "response": "I'm functioning well, ready to help you with secure messaging and medical document management. How can I assist you?",
+      "category": "greeting"
+    },
+    {
+      "input": "What services do you offer?",
+      "response": "I offer several HIPAA-compliant services: secure messaging between patients and healthcare providers, encrypted medical file sharing, document verification, and managing healthcare communications. All data is stored securely on the blockchain.",
+      "category": "information"
+    },
+    {
+      "input": "Tell me about headaches",
+      "response": "Headaches can have many causes including stress, dehydration, or underlying medical conditions. Common types include tension headaches, migraines, and cluster headaches. Please consult your healthcare provider for proper diagnosis and treatment. I can help you securely communicate with your doctor about your symptoms.",
+      "category": "medical_info"
+    },
+    {
+      "input": "What about blood pressure?",
+      "response": "Blood pressure monitoring is essential for heart health. Normal range is typically around 120/80 mmHg. High blood pressure (hypertension) is generally considered 130/80 mmHg or higher. Our platform helps track these metrics securely. Always consult your healthcare provider for personalized advice.",
+      "category": "medical_info"
+    },
+    {
+      "input": "How do I share medical records?",
+      "response": "To share medical records securely: 1. Upload your documents using our encrypted upload feature 2. Select your healthcare provider from your trusted contacts 3. Choose sharing permissions 4. Documents will be encrypted and stored on IPFS with blockchain verification. Only authorized providers can access them.",
+      "category": "platform_usage"
+    }
+  ],
+  "categories": [
+    "greeting",
+    "medical_info",
+    "platform_usage",
+    "information",
+    "emergency",
+    "medication",
+    "appointment"
+  ]
+}

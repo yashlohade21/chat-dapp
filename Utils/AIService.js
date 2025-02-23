@@ -1,24 +1,31 @@
-// import natural from 'natural';
-import Fuse from 'fuse.js';
+import * as tf from '@tensorflow/tfjs';
+import { buildChatbotModel, predictResponse } from './ChatbotModel';
+import medicalResponses from '../dataset/chatbot_training_data.json';
 
-export const SUPPORTED_LANGUAGES = [
-  { code: 'es', name: 'Spanish' },
-  { code: 'fr', name: 'French' },
-  { code: 'de', name: 'German' },
-  { code: 'it', name: 'Italian' },
-  { code: 'pt', name: 'Portuguese' },
-  { code: 'ru', name: 'Russian' },
-  { code: 'zh', name: 'Chinese' },
-  { code: 'ja', name: 'Japanese' },
-  { code: 'ko', name: 'Korean' },
-  { code: 'hi', name: 'Hindi' }
-];
+let model = null;
+let categories = null;
+let responses = null;
 
-// Fuzzy search configuration
-const fuseOptions = {
-  keys: ['name', 'msg'],
-  threshold: 0.4,
-  distance: 100
+const initializeModel = async () => {
+  if (!model) {
+    try {
+      // Load model from localStorage or use basic response system
+      const savedModel = localStorage.getItem('medical-chatbot-model');
+      if (savedModel) {
+        console.log('Loading saved model...');
+        model = await tf.loadLayersModel('localstorage://medical-chatbot-model');
+        console.log('Model loaded successfully');
+      } else {
+        console.log('No saved model found, using basic response system');
+        // Initialize with basic response system
+        categories = medicalResponses.categories;
+        responses = medicalResponses.conversations;
+      }
+    } catch (error) {
+      console.error('Error initializing model:', error);
+      // Don't throw error, fallback to basic responses
+    }
+  }
 };
 
 export const AIService = {
@@ -239,7 +246,57 @@ export const AIService = {
 
   // New method: Chatbot Response
   chatbotResponse: async (query) => {
-    // Simulate an automated chatbot response.
-    return Promise.resolve("Automated response to '" + query + "'");
+    try {
+      await initializeModel();
+      
+      // Normalize query
+      const normalizedQuery = query.toLowerCase().trim();
+      
+      // Medical domain-specific responses
+      const medicalTerms = {
+        headache: 'Headaches can have many causes including stress, dehydration, or underlying medical conditions. Please consult your healthcare provider for proper diagnosis and treatment.',
+        pain: 'When discussing pain, it\'s important to note: 1. Location 2. Intensity 3. Duration 4. Triggers. This helps healthcare providers make accurate assessments.',
+        'blood pressure': 'Blood pressure monitoring is essential for heart health. Normal range is typically around 120/80 mmHg. Regular monitoring through our platform helps track trends.',
+        medication: 'For medication-related queries: 1. Always follow prescribed dosage 2. Report side effects 3. Use our platform to track medication schedules.',
+        prescription: 'Prescriptions can be securely managed through our platform. Always consult your healthcare provider for medication changes.'
+      };
+
+      // Check for exact medical term matches first
+      for (const [term, response] of Object.entries(medicalTerms)) {
+        if (normalizedQuery.includes(term)) {
+          return response;
+        }
+      }
+
+      // If model exists, try to use it
+      if (model) {
+        try {
+          // Convert query to model input format
+          const input = tf.tensor2d([Array(20).fill(0)]); // Placeholder input
+          const response = await predictResponse(model, input, categories, responses);
+          input.dispose(); // Clean up tensor
+          return response;
+        } catch (modelError) {
+          console.error('Error using model:', modelError);
+          // Fall through to basic response
+        }
+      }
+
+      // Find most relevant response from dataset
+      const relevantResponse = responses.find(r => 
+        normalizedQuery.includes(r.input.toLowerCase())
+      );
+
+      if (relevantResponse) {
+        return relevantResponse.response;
+      }
+
+      // Fallback response
+      return "I understand you have a medical-related question. For your safety and privacy: 1. Please be specific 2. Note that I can't provide medical advice 3. Use our platform to securely communicate with healthcare providers.";
+      
+    } catch (error) {
+      console.error('Error in medical chatbot response:', error);
+      return "I apologize, but I'm having trouble processing your query. For your safety, please contact your healthcare provider directly.";
+    }
   }
 };

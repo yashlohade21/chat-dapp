@@ -114,6 +114,119 @@ IPFS is used for decentralized file storage:
 - Handle model initialization errors gracefully
 - Avoid reinitializing models during file processing
 
+## Chatbot Training and Implementation
+
+### Dataset Structure
+- Medical Q&A dataset in JSON format
+- Each entry contains input (question) and response pairs
+- Focus on healthcare domain-specific responses
+- Store in dataset/chatbot_training_data.json
+
+### Training Process
+1. **Setup Dependencies**
+```bash
+npm install @tensorflow/tfjs
+```
+
+2. **Prepare Training Data**
+- Create dataset directory
+- Structure JSON with input/response pairs
+- Include healthcare-focused conversations
+- Validate data format before training
+
+3. **Data Preprocessing**
+- Tokenize text into words
+- Build vocabulary from dataset
+- Convert words to numerical sequences
+- Pad sequences to fixed length
+- Handle unknown words with <UNK> token
+
+4. **Model Architecture**
+- Simple sequence model for faster responses
+- Embedding layer for word representation
+- LSTM layer for sequence processing
+- Dense output layer with softmax activation
+- Compile with categorical crossentropy loss
+
+5. **Training Script**
+```javascript
+npm run train-chatbot
+```
+- Loads and preprocesses dataset
+- Builds model architecture
+- Trains for 20 epochs
+- Saves model to localStorage
+- Monitors loss and accuracy
+
+### Implementation Components
+1. **Utils/dataPrep.js**
+- Handles data loading and preprocessing
+- Manages vocabulary creation
+- Implements sequence padding
+- Maximum sequence length: 20
+- Vocabulary size: 5000 words
+
+2. **Utils/ChatbotModel.js**
+- Defines model architecture
+- Sets hyperparameters
+- Implements model building
+- Handles model compilation
+
+3. **Utils/AIService.js**
+- Manages chatbot responses
+- Implements response generation
+- Handles error cases
+- Provides fallback responses
+
+4. **Components/ChatbotGlobal**
+- Manages chat interface
+- Handles user input
+- Displays bot responses
+- Shows typing indicators
+
+### Response Generation
+- Pattern matching for common queries
+- Category-based response selection
+- Fallback to general responses
+- Healthcare-specific terminology
+- HIPAA-compliant messaging
+
+### Best Practices
+- Keep responses healthcare-focused
+- Maintain HIPAA compliance
+- Include security disclaimers
+- Provide step-by-step instructions
+- Handle errors gracefully
+- Show typing indicators
+- Support keyboard navigation
+
+### Performance Optimization
+- Small model for quick responses
+- Limited vocabulary size
+- Fixed sequence length
+- Browser-based inference
+- Efficient pattern matching
+
+### Security Considerations
+- No medical advice in responses
+- Clear healthcare disclaimers
+- Privacy-focused responses
+- HIPAA compliance in all communications
+- Secure data handling references
+
+### Maintenance
+- Regular model retraining
+- Dataset updates
+- Response quality monitoring
+- Performance tracking
+- User feedback integration
+
+## Next.js Configuration
+- Project uses ES modules (package.json "type": "module")
+- Use `export default` instead of `module.exports` in .js files
+- Use .cjs extension for files that must use CommonJS
+- next.config.js must use ES modules syntax to match project config
+
 In the modern digital landscape, privacy, security, and control over personal data have become more critical than ever. Traditional messaging platforms rely on centralized servers that store user data, creating potential vulnerabilities and concerns related to data ownership, privacy breaches, and censorship. With the growing concerns surrounding data security and privacy, especially in sensitive sectors like healthcare, there is an urgent need for a more secure and private alternative to conventional messaging systems. De-Chat is a decentralized chat application designed to address these challenges by utilizing blockchain technology to create a secure, transparent, and user-controlled communication platform. Specifically tailored for smart healthcare systems, De-Chat offers a platform for confidential communication that ensures the privacy and integrity of messages.
 
 # Implementation Status
@@ -427,3 +540,110 @@ The encryption system provides:
 - Use a singleton pattern for model services
 - Handle model initialization errors gracefully
 - Avoid reinitializing models during file processing
+
+## Chatbot Training and Implementation
+
+### Dataset Structure
+- Medical Q&A dataset in JSON format
+- Each entry contains input (question) and response pairs
+- Focus on healthcare domain-specific responses
+- Store in dataset/chatbot_training_data.json
+
+### Training Process
+1. **Setup Dependencies**
+```bash
+npm install @tensorflow/tfjs
+```
+
+2. **Prepare Training Data**
+- Create dataset directory
+- Structure JSON with input/response pairs
+- Include healthcare-focused conversations
+- Validate data format before training
+
+3. **Data Preprocessing**
+- Tokenize text into words
+- Build vocabulary from dataset
+- Convert words to numerical sequences
+- Pad sequences to fixed length
+- Handle unknown words with <UNK> token
+
+4. **Model Architecture**
+- Simple sequence model for faster responses
+- Embedding layer for word representation
+- LSTM layer for sequence processing
+- Dense output layer with softmax activation
+- Compile with categorical crossentropy loss
+
+5. **Training Script**
+```javascript
+npm run train-chatbot
+```
+- Loads and preprocesses dataset
+- Builds model architecture
+- Trains for 20 epochs
+- Saves model to localStorage
+- Monitors loss and accuracy
+
+### Implementation Components
+1. **Utils/dataPrep.js**
+- Handles data loading and preprocessing
+- Manages vocabulary creation
+- Implements sequence padding
+- Maximum sequence length: 20
+- Vocabulary size: 5000 words
+
+2. **Utils/ChatbotModel.js**
+- Defines model architecture
+- Sets hyperparameters
+- Implements model building
+- Handles model compilation
+
+3. **Utils/AIService.js**
+- Manages chatbot responses
+- Implements response generation
+- Handles error cases
+- Provides fallback responses
+
+4. **Components/ChatbotGlobal**
+- Manages chat interface
+- Handles user input
+- Displays bot responses
+- Shows typing indicators
+
+### Response Generation
+- Pattern matching for common queries
+- Category-based response selection
+- Fallback to general responses
+- Healthcare-specific terminology
+- HIPAA-compliant messaging
+
+### Best Practices
+- Keep responses healthcare-focused
+- Maintain HIPAA compliance
+- Include security disclaimers
+- Provide step-by-step instructions
+- Handle errors gracefully
+- Show typing indicators
+- Support keyboard navigation
+
+### Performance Optimization
+- Small model for quick responses
+- Limited vocabulary size
+- Fixed sequence length
+- Browser-based inference
+- Efficient pattern matching
+
+### Security Considerations
+- No medical advice in responses
+- Clear healthcare disclaimers
+- Privacy-focused responses
+- HIPAA compliance in all communications
+- Secure data handling references
+
+### Maintenance
+- Regular model retraining
+- Dataset updates
+- Response quality monitoring
+- Performance tracking
+- User feedback integration
