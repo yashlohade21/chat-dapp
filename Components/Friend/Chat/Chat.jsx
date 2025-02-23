@@ -20,6 +20,7 @@ import { IPFSService } from "../../../Utils/IPFSService";
 import { encryptFileWithPassphrase, decryptFileWithPassphrase } from "../../../Utils/CryptoService";
 import CryptoJS from "crypto-js";
 import { ChatAppContect } from "../../../Context/ChatAppContext";
+import { noSSR } from "next/dynamic";
 
 const MetricsChart = React.memo(({ data }) => (
   <div className={Style.metrics_chart}>
@@ -792,13 +793,6 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                   title="Schedule Appointment"
                 >
                   📅
-                </button>
-                <button
-                  onClick={handleChatbotQuery}
-                  className={Style.ai_button}
-                  title="AI Assistant"
-                >
-                  🤖
                 </button>
                 <button
                   onClick={handleTextPrediction}

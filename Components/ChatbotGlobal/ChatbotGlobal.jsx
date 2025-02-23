@@ -3,6 +3,29 @@ import { AIService } from '../../Utils/AIService';
 import { ChatAppContect } from '../../Context/ChatAppContext';
 import Style from './ChatbotGlobal.module.css';
 
+const SUGGESTED_QUESTIONS = [
+  // General Health
+  "What should I do if I'm feeling anxious?",
+  "How can I improve my sleep habits?",
+  "What are healthy eating tips for teens?",
+  "How do I maintain good mental health?",
+  "What exercises are good for teenagers?",
+  
+  // Personal Health
+  "How do I deal with acne?",
+  "Is my weight healthy for my age?",
+  "How can I handle stress during exams?",
+  "What should I know about puberty?",
+  "How much sleep do teenagers need?",
+
+  // Healthcare System
+  "Do I need a parent for doctor visits?",
+  "How do I find a teen health specialist?",
+  "What vaccines do teens need?",
+  "Are my health conversations private?",
+  "How do I talk to doctors about sensitive topics?"
+];
+
 const ChatbotGlobal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -11,23 +34,19 @@ const ChatbotGlobal = () => {
   const [error, setError] = useState(null);
   const { userName } = useContext(ChatAppContect) || {};
 
-  const handleSendMessage = useCallback(async () => {
-    if (!inputValue.trim()) return;
+  const handleSendMessage = useCallback(async (messageText = inputValue) => {
+    if (!messageText.trim()) return;
 
     try {
       setError(null);
-      // Add user message
-      const userMessage = { type: 'user', text: inputValue };
+      const userMessage = { type: 'user', text: messageText };
       setMessages(prev => [...prev, userMessage]);
       
-      // Clear input and show typing indicator
       setInputValue('');
       setIsTyping(true);
 
-      // Get chatbot response
-      const response = await AIService.chatbotResponse(inputValue);
+      const response = await AIService.chatbotResponse(messageText);
       
-      // Add bot response with slight delay for natural feel
       setTimeout(() => {
         setMessages(prev => [...prev, { type: 'bot', text: response }]);
         setIsTyping(false);
@@ -50,6 +69,25 @@ const ChatbotGlobal = () => {
       handleSendMessage();
     }
   };
+
+  const handleSuggestedQuestion = (question) => {
+    handleSendMessage(question);
+  };
+
+  const renderSuggestedQuestions = () => (
+    <div className={Style.suggested_questions}>
+      <p className={Style.suggestions_title}>You can also ask:</p>
+      {SUGGESTED_QUESTIONS.map((question, index) => (
+        <button
+          key={index}
+          className={Style.suggestion_btn}
+          onClick={() => handleSuggestedQuestion(question)}
+        >
+          {question}
+        </button>
+      ))}
+    </div>
+  );
 
   if (!isOpen) {
     return (
@@ -78,20 +116,26 @@ const ChatbotGlobal = () => {
         )}
         
         {messages.length === 0 ? (
-          <div className={Style.welcome_message}>
-            <span className={Style.bot_avatar}>🤖</span>
-            <p>Hello{userName ? ` ${userName}` : ''}! How can I assist you today?</p>
-          </div>
-        ) : (
-          messages.map((msg, index) => (
-            <div 
-              key={index} 
-              className={`${Style.message} ${Style[msg.type]}`}
-            >
-              {msg.type === 'bot' && <span className={Style.bot_avatar}>🤖</span>}
-              <p>{msg.text}</p>
+          <>
+            <div className={Style.welcome_message}>
+              <span className={Style.bot_avatar}>🤖</span>
+              <p>Hello{userName ? ` ${userName}` : ''}! How can I assist you today?</p>
             </div>
-          ))
+            {renderSuggestedQuestions()}
+          </>
+        ) : (
+          <>
+            {messages.map((msg, index) => (
+              <div 
+                key={index} 
+                className={`${Style.message} ${Style[msg.type]}`}
+              >
+                {msg.type === 'bot' && <span className={Style.bot_avatar}>🤖</span>}
+                <p>{msg.text}</p>
+              </div>
+            ))}
+            {!isTyping && renderSuggestedQuestions()}
+          </>
         )}
         
         {isTyping && (
@@ -113,7 +157,7 @@ const ChatbotGlobal = () => {
           aria-label="Chat message"
         />
         <button 
-          onClick={handleSendMessage}
+          onClick={() => handleSendMessage()}
           className={Style.send_btn}
           disabled={!inputValue.trim() || isTyping}
         >

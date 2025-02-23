@@ -29,6 +29,126 @@
       "input": "How do I share medical records?",
       "response": "To share medical records securely: 1. Upload your documents using our encrypted upload feature 2. Select your healthcare provider from your trusted contacts 3. Choose sharing permissions 4. Documents will be encrypted and stored on IPFS with blockchain verification. Only authorized providers can access them.",
       "category": "platform_usage"
+    },
+    {
+      "input": "How can I schedule an appointment?",
+      "response": "To schedule an appointment: 1. Go to the appointments section 2. Select your healthcare provider 3. Choose available time slots 4. Add any relevant notes or symptoms 5. Submit your request. You'll receive a confirmation once the provider accepts.",
+      "category": "appointment"
+    },
+    {
+      "input": "What should I do in a medical emergency?",
+      "response": "If you're experiencing a medical emergency: 1. Call emergency services (911) immediately 2. Do not wait for online responses 3. This platform is not for emergency situations. For urgent but non-emergency issues, use our urgent care locator feature.",
+      "category": "emergency"
+    },
+    {
+      "input": "How secure is my medical data?",
+      "response": "Your medical data is highly secure: 1. End-to-end encryption for all communications 2. Blockchain-based storage for immutability 3. HIPAA-compliant systems 4. Decentralized storage preventing single points of failure 5. Access controls requiring multi-factor authentication.",
+      "category": "security"
+    },
+    {
+      "input": "Can I message my doctor directly?",
+      "response": "Yes, you can message your healthcare provider directly through our secure platform: 1. Navigate to your provider's profile 2. Click 'Send Message' 3. Compose your message 4. Add any attachments if needed 5. Messages are encrypted and HIPAA-compliant.",
+      "category": "communication"
+    },
+    {
+      "input": "How do I update my medical history?",
+      "response": "To update your medical history: 1. Go to your profile settings 2. Select 'Medical History' 3. Add or modify conditions, medications, allergies, and procedures 4. Save changes 5. Your providers will be notified of significant updates.",
+      "category": "profile"
+    },
+    {
+      "input": "What medications can you help me track?",
+      "response": "Our medication tracking system helps you manage: 1. Prescription medications 2. Over-the-counter medicines 3. Supplements 4. Dosage schedules 5. Refill reminders. Note: Always verify medication information with your healthcare provider.",
+      "category": "medication"
+    },
+    {
+      "input": "How do I find a specialist?",
+      "response": "To find a specialist: 1. Use our provider directory 2. Filter by specialty, location, and insurance 3. Read provider profiles and reviews 4. Check availability 5. Request an appointment through our secure platform.",
+      "category": "provider_search"
+    },
+    {
+      "input": "What should I do if I forgot my password?",
+      "response": "To reset your password: 1. Click 'Forgot Password' on the login screen 2. Enter your registered email 3. Follow the secure reset link 4. Create a new strong password 5. Re-authenticate with your wallet if needed.",
+      "category": "account"
+    },
+    {
+      "input": "How can I view my test results?",
+      "response": "To access your test results: 1. Go to your health records section 2. Select 'Lab Results' 3. Choose the specific test 4. View detailed results and trending data 5. Download or share securely with other providers if needed.",
+      "category": "medical_records"
+    },
+    {
+      "input": "What should I do if I'm feeling anxious?",
+      "response": "If you're feeling anxious: 1. Take slow, deep breaths 2. Talk to someone you trust (parent, counselor, or friend) 3. Try relaxation techniques 4. Maintain regular exercise and sleep 5. Consider speaking with a mental health professional through our secure platform.",
+      "category": "teen_mental_health"
+    },
+    {
+      "input": "How can I improve my sleep habits?",
+      "response": "For better sleep: 1. Set a consistent sleep schedule 2. Avoid screens 1 hour before bed 3. Create a relaxing bedtime routine 4. Keep your room cool and dark 5. Limit caffeine after noon. Teens need 8-10 hours of sleep per night.",
+      "category": "teen_health"
+    },
+    {
+      "input": "What are healthy eating tips for teens?",
+      "response": "Healthy eating tips: 1. Eat regular meals, including breakfast 2. Include fruits and vegetables daily 3. Choose whole grains 4. Stay hydrated with water 5. Limit processed foods and sugary drinks. Track your nutrition goals in our health dashboard.",
+      "category": "teen_nutrition"
+    },
+    {
+      "input": "How do I maintain good mental health?",
+      "response": "For good mental health: 1. Maintain social connections 2. Practice self-care activities 3. Get regular exercise 4. Talk about your feelings 5. Set realistic goals. Our platform connects you with teen mental health resources and counselors.",
+      "category": "teen_mental_health"
+    },
+    {
+      "input": "What exercises are good for teenagers?",
+      "response": "Recommended exercises: 1. 60 minutes of daily physical activity 2. Mix of cardio (running, swimming) 3. Strength training with proper form 4. Team sports for social interaction 5. Yoga or stretching for flexibility. Always start gradually and listen to your body.",
+      "category": "teen_fitness"
+    },
+    {
+      "input": "How do I deal with acne?",
+      "response": "To manage acne: 1. Wash face twice daily with gentle cleanser 2. Don't pop pimples 3. Use non-comedogenic products 4. Keep hands and phones clean 5. Consider seeing a dermatologist through our platform for persistent acne.",
+      "category": "teen_health"
+    },
+    {
+      "input": "Is my weight healthy for my age?",
+      "response": "Weight health involves many factors: 1. BMI is just one measure 2. Growth patterns vary during teen years 3. Focus on healthy habits, not numbers 4. Discuss concerns with your healthcare provider 5. Track your health metrics securely in our app.",
+      "category": "teen_health"
+    },
+    {
+      "input": "How can I handle stress during exams?",
+      "response": "Exam stress management: 1. Create a study schedule 2. Take regular breaks 3. Use relaxation techniques 4. Maintain sleep and exercise 5. Talk to counselors through our platform. Remember, some stress is normal.",
+      "category": "teen_mental_health"
+    },
+    {
+      "input": "What should I know about puberty?",
+      "response": "About puberty: 1. It's a normal part of development 2. Everyone develops at different rates 3. Physical and emotional changes are expected 4. Keep track of changes in our health diary 5. Discuss concerns with healthcare providers through secure messaging.",
+      "category": "teen_health"
+    },
+    {
+      "input": "How much sleep do teenagers need?",
+      "response": "Teen sleep needs: 1. 8-10 hours per night is recommended 2. Maintain consistent sleep schedule 3. Create a relaxing bedtime routine 4. Track sleep patterns in our app 5. Discuss sleep issues with healthcare providers if needed.",
+      "category": "teen_health"
+    },
+    {
+      "input": "Do I need a parent for doctor visits?",
+      "response": "Regarding parent presence: 1. Laws vary by location and age 2. Some visits may require parent consent 3. You can request private time with doctor 4. Certain services may be confidential 5. Our platform helps manage appointment preferences and privacy settings.",
+      "category": "teen_healthcare"
+    },
+    {
+      "input": "How do I find a teen health specialist?",
+      "response": "Finding specialists: 1. Use our provider directory to filter for teen health experts 2. Read provider profiles and reviews 3. Check if they accept your insurance 4. Consider location and availability 5. Schedule consultations through our secure platform.",
+      "category": "teen_healthcare"
+    },
+    {
+      "input": "What vaccines do teens need?",
+      "response": "Important teen vaccines: 1. HPV vaccine series 2. Tdap booster 3. Meningococcal vaccines 4. Yearly flu shot 5. Track your immunization records in our secure health portal. Consult your healthcare provider for personalized recommendations.",
+      "category": "teen_healthcare"
+    },
+    {
+      "input": "Are my health conversations private?",
+      "response": "Privacy protection: 1. Many health discussions are confidential 2. Our platform uses end-to-end encryption 3. You control who sees your information 4. Certain serious concerns require reporting 5. Ask providers about their privacy policies.",
+      "category": "teen_privacy"
+    },
+    {
+      "input": "How do I talk to doctors about sensitive topics?",
+      "response": "Discussing sensitive topics: 1. Write down your concerns beforehand 2. Use our secure messaging for initial questions 3. Request private time during visits 4. Be honest - doctors are there to help 5. Consider starting with our online chat feature for practice.",
+      "category": "teen_healthcare"
     }
   ],
   "categories": [
@@ -38,6 +158,18 @@
     "information",
     "emergency",
     "medication",
-    "appointment"
+    "appointment",
+    "security",
+    "communication",
+    "profile",
+    "provider_search",
+    "account",
+    "medical_records",
+    "teen_mental_health",
+    "teen_health",
+    "teen_nutrition",
+    "teen_fitness",
+    "teen_healthcare",
+    "teen_privacy"
   ]
 }

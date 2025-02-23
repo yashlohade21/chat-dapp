@@ -134,51 +134,51 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        const detectionResult = await documentDetectionService.detectFakeDocument(file, (epoch, total) => {
-          setEpochProgress({ current: epoch, total });
-        });
-        
-        if (!detectionResult.isReal) {
-          throw new Error(`The document ${file.name} failed authenticity check (Confidence: ${Math.round(detectionResult.confidence * 100)}%)`);
-        }
-        
         setProgress((i / files.length) * 25);
 
-        const fileBuffer = await new Promise((resolve, reject) => {
+        const fileData = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
-          reader.onerror = (err) => reject(err);
-          reader.readAsArrayBuffer(file);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
         });
 
-        if (!fileBuffer) {
+        if (!fileData) {
           throw new Error('Failed to read file');
         }
 
-        const encryptResult = await encryptFileWithPassphrase(fileBuffer, randomKey);
+        const encryptResult = await encryptFileWithPassphrase(fileData, randomKey);
         
         if (!encryptResult.success) {
           throw new Error(encryptResult.error || "Encryption failed");
         }
 
-        const encryptedBlob = new Blob([encryptResult.encryptedData], { type: 'application/octet-stream' });
-        const encryptedFile = new File([encryptedBlob], file.name, { type: 'application/octet-stream' });
-
-        const result = await IPFSService.uploadFile(encryptedFile);
-        if (!result.success) {
-          throw new Error(result.error || 'Upload failed');
-        }
-
         const fileMetadata = {
-          cid: result.cid,
+          cid: null,
           passphraseHash: encryptResult.passphraseHash,
           salt: encryptResult.salt,
+          prefix: encryptResult.prefix,
           name: file.name,
           type: file.type,
           size: file.size,
           timestamp: Date.now(),
           owner: account
         };
+
+        const encryptedBlob = new Blob([encryptResult.encryptedData], { 
+          type: 'application/octet-stream' 
+        });
+        
+        const encryptedFile = new File([encryptedBlob], file.name, { 
+          type: 'application/octet-stream' 
+        });
+
+        const result = await IPFSService.uploadFile(encryptedFile);
+        if (!result.success) {
+          throw new Error(result.error || 'Upload failed');
+        }
+
+        fileMetadata.cid = result.cid;
 
         try {
           const secureStorage = JSON.parse(localStorage.getItem('secureFileStorage') || '{}');
@@ -203,14 +203,13 @@ const MedicalFileUpload = ({ onUpload, account }) => {
 
       setFiles([]);
       setProgress(100);
-      alert(`File(s) uploaded successfully!\nYour decryption key: ${randomKey}\n\nPlease save this key securely - you'll need it to view your files.`);
       setShowDecryptionKey(true);
+      alert(`File(s) uploaded successfully!\nYour decryption key: ${randomKey}\n\nPlease save this key securely - you'll need it to view your files.`);
     } catch (err) {
       console.error('Upload error:', err);
       setError('Error uploading files: ' + (err.message || 'Unknown error'));
     } finally {
       setUploading(false);
-      setEpochProgress({ current: 0, total: 50 });
     }
   };
 
@@ -243,7 +242,7 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       if (!response.success) {
         throw new Error(`Failed to fetch file ${file.name} from IPFS: ${response.error}`);
       }
-      console.log('File fetched successfully from gateway:', response.gateway);
+      console.log('File fetched successfully');
 
       console.log('Attempting decryption...');
       const decryptionResult = await decryptFileWithPassphrase(
@@ -258,76 +257,38 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       }
       console.log('Decryption successful');
 
-      // Convert base64 to blob
-      console.log('Converting decrypted data to binary...');
-      const binaryString = window.atob(decryptionResult.decryptedData);
+      const decryptedData = file.prefix 
+        ? file.prefix + decryptionResult.decryptedData 
+        : decryptionResult.decryptedData;
+
+      const base64Data = file.prefix 
+        ? decryptedData.split(',')[1] 
+        : decryptedData;
+
+      const binaryString = window.atob(base64Data);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
-      
-      console.log('Creating blob with type:', file.type);
+
       const blob = new Blob([bytes], { type: file.type });
       const url = URL.createObjectURL(blob);
-      console.log('Created object URL:', url);
 
-      if (file.type === 'application/pdf') {
-        console.log('Opening PDF in new window');
-        const win = window.open('', '_blank');
-        if (!win) {
-          throw new Error('Popup blocked - please allow popups for this site');
-        }
-        win.document.write(`
-          <html>
-            <head>
-              <title>${file.name}</title>
-              <style>
-                body { margin: 0; }
-                iframe { border: none; width: 100vw; height: 100vh; }
-              </style>
-            </head>
-            <body>
-              <iframe src="${url}#toolbar=0" type="application/pdf"></iframe>
-            </body>
-          </html>
-        `);
-        win.document.close();
-      } else if (file.type.startsWith('image/')) {
-        console.log('Opening image in new window');
-        const win = window.open('', '_blank');
-        if (!win) {
-          throw new Error('Popup blocked - please allow popups for this site');
-        }
-        win.document.write(`
-          <html>
-            <head>
-              <title>${file.name}</title>
-              <style>
-                body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #292F3F; }
-                img { max-width: 100%; max-height: 100vh; object-fit: contain; }
-              </style>
-            </head>
-            <body>
-              <img src="${url}" alt="${file.name}" />
-            </body>
-          </html>
-        `);
-        win.document.close();
-      } else {
-        console.log('Initiating file download');
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      setDecryptedFiles(prev => [...prev, {
+        ...file,
+        content: url
+      }]);
 
-      // Clean up URLs after a delay to ensure they're loaded
       setTimeout(() => {
-        URL.revokeObjectURL(url);
-        console.log('Cleaned up object URL');
-      }, 1000);
+        setDecryptedFiles(prev => {
+          prev.forEach(f => {
+            if (f.cid !== file.cid && f.content?.startsWith('blob:')) {
+              URL.revokeObjectURL(f.content);
+            }
+          });
+          return prev.filter(f => f.cid === file.cid);
+        });
+      }, 2000);
 
     } catch (err) {
       console.error('Decryption error:', err);
@@ -485,26 +446,43 @@ const MedicalFileUpload = ({ onUpload, account }) => {
         </div>
       )}
 
-      {decryptedFiles.map((file) => (
-        <li key={file.cid} className={styles.decryptedFile}>
-          <h5>{file.name}</h5>
-          <div className={styles.fileContent}>
-            {file.type === 'application/pdf' ? (
-              <iframe
-                src={file.content}
-                width="100%"
-                height="600px"
-                title={file.name}
-                className={styles.pdfViewer}
-              />
-            ) : (
-              <a href={file.content} download={file.name} className={styles.downloadLink}>
-                Download {file.name}
-              </a>
-            )}
-          </div>
-        </li>
-      ))}
+      {decryptedFiles.length > 0 && (
+        <div className={styles.previewContainer}>
+          <h4>Decrypted File Preview</h4>
+          {decryptedFiles.map((file) => (
+            <div key={file.cid} className={styles.previewItem}>
+              <h5>{file.name}</h5>
+              <div className={styles.previewContent}>
+                {file.type === 'application/pdf' ? (
+                  <iframe
+                    src={file.content}
+                    className={styles.pdfPreview}
+                    title={file.name}
+                  />
+                ) : file.type.startsWith('image/') ? (
+                  <img 
+                    src={file.content} 
+                    alt={file.name}
+                    className={styles.imagePreview}
+                  />
+                ) : (
+                  <div className={styles.fileInfo}>
+                    <p>File type: {file.type}</p>
+                    <p>Size: {(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <a 
+                      href={file.content} 
+                      download={file.name}
+                      className={styles.downloadLink}
+                    >
+                      Download File
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {showDecryptionKey && (
         <div className={styles.decryptionKeyModal}>
