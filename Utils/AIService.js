@@ -1,29 +1,69 @@
 import * as tf from '@tensorflow/tfjs';
-import { buildChatbotModel, predictResponse } from './ChatbotModel';
+import { loadXMLDataset } from './xmlDataPrep.js';
+import { tokenizeAndPad } from './dataPrep.js';
+import { predictRecovery } from './ChatbotModel.js';
 import medicalResponses from '../dataset/chatbot_training_data.json';
 
 let model = null;
+let autoencoder = null;
+let encoder = null;
+let recoveryPredictor = null;
 let categories = null;
 let responses = null;
+let vocab = null;
 
 const initializeModel = async () => {
   if (!model) {
     try {
-      // Load model from localStorage or use basic response system
-      const savedModel = localStorage.getItem('medical-chatbot-model');
-      if (savedModel) {
-        console.log('Loading saved model...');
+      // Load models from localStorage
+      console.log('Loading models...');
+      
+      // Try to load supervised model
+      try {
         model = await tf.loadLayersModel('localstorage://medical-chatbot-model');
-        console.log('Model loaded successfully');
-      } else {
-        console.log('No saved model found, using basic response system');
-        // Initialize with basic response system
-        categories = medicalResponses.categories;
-        responses = medicalResponses.conversations;
+        console.log('Supervised model loaded successfully');
+      } catch (e) {
+        console.warn('Could not load supervised model:', e.message);
       }
+      
+      // Try to load unsupervised models
+      try {
+        encoder = await tf.loadLayersModel('localstorage://medical-encoder-model');
+        console.log('Encoder model loaded successfully');
+        
+        autoencoder = await tf.loadLayersModel('localstorage://medical-autoencoder-model');
+        console.log('Autoencoder model loaded successfully');
+      } catch (e) {
+        console.warn('Could not load unsupervised models:', e.message);
+      }
+      
+      // Try to load recovery predictor
+      try {
+        recoveryPredictor = await tf.loadLayersModel('localstorage://medical-recovery-model');
+        console.log('Recovery predictor loaded successfully');
+      } catch (e) {
+        console.warn('Could not load recovery predictor:', e.message);
+      }
+      
+      // Always initialize categories and responses from the dataset
+      categories = medicalResponses.categories;
+      responses = medicalResponses.conversations;
+      
+      // Build vocabulary (simplified version)
+      const allText = responses.flatMap(pair => [pair.input, pair.response]);
+      const words = new Set();
+      allText.forEach(text => text.toLowerCase().split(/\s+/).forEach(word => words.add(word)));
+      vocab = {
+        '<PAD>': 0,
+        '<UNK>': 1,
+        ...Object.fromEntries([...words].map((word, i) => [word, i + 2]))
+      };
+      
     } catch (error) {
-      console.error('Error initializing model:', error);
-      // Don't throw error, fallback to basic responses
+      console.error('Error initializing models:', error);
+      // Fallback to basic response system
+      categories = medicalResponses.categories;
+      responses = medicalResponses.conversations;
     }
   }
 };
@@ -91,6 +131,15 @@ export const AIService = {
       ];
     }
 
+    // Recovery prediction related
+    if (text.includes('recover') || text.includes('healing') || text.includes('prognosis') || text.includes('get better')) {
+      return [
+        'Based on similar cases, recovery typically takes 2-4 weeks with proper care.',
+        'Would you like me to analyze your recovery trajectory?',
+        'I can help you track your recovery progress over time.'
+      ];
+    }
+
     // General greetings
     if (text.includes('hello') || text.includes('hi ') || text.startsWith('hi') || text.includes('hey')) {
       return [
@@ -137,6 +186,7 @@ export const AIService = {
     if (text.includes('medication') || text.includes('medicine')) return 'prescription';
     if (text.includes('thank')) return 'gratitude';
     if (text.includes('treatment') || text.includes('therapy')) return 'treatment';
+    if (text.includes('recover') || text.includes('healing') || text.includes('prognosis')) return 'recovery';
     return 'general';
   },
 
@@ -145,6 +195,141 @@ export const AIService = {
     const sentences = text.split(/[.!?]+/);
     const firstThreeSentences = sentences.slice(0, 3).join('. ');
     return firstThreeSentences + (sentences.length > 3 ? '...' : '');
+  },
+
+  // New method for recovery prediction
+  predictPatientRecovery: async (symptoms, medicalHistory, currentTreatment) => {
+    await initializeModel();
+    
+    if (!encoder || !recoveryPredictor) {
+      return {
+        success: false,
+        message: "Recovery prediction models are not available. Please train the models first."
+      };
+    }
+    
+    try {
+      // Combine inputs into a single text
+      const combinedText = `
+        Symptoms: ${symptoms}
+        Medical History: ${medicalHistory}
+        Current Treatment: ${currentTreatment}
+      `;
+      
+      // Tokenize the input
+      const tokenizedInput = tokenizeAndPad(combinedText, vocab);
+      
+      // Get recovery prediction
+      const prediction = await predictRecovery(encoder, recoveryPredictor, tokenizedInput, vocab);
+      
+      if (prediction.error) {
+        return {
+          success: false,
+          message: `Could not predict recovery: ${prediction.error}`
+        };
+      }
+      
+      // Format the prediction results
+      const timeToRecovery = Math.max(1, Math.round(prediction.timeToRecovery));
+      const recoveryPercentage = Math.min(100, Math.max(0, Math.round(prediction.recoveryPercentage * 100)));
+      
+      // Generate a human-readable response
+      let recoveryMessage = "";
+      if (recoveryPercentage > 80) {
+        recoveryMessage = `Based on similar cases, you are likely to experience an excellent recovery (${recoveryPercentage}%) within approximately ${timeToRecovery} days with proper care and treatment adherence.`;
+      } else if (recoveryPercentage > 60) {
+        recoveryMessage = `Based on similar cases, you are likely to experience a good recovery (${recoveryPercentage}%) within approximately ${timeToRecovery} days, though some symptoms may persist.`;
+      } else if (recoveryPercentage > 40) {
+        recoveryMessage = `Based on similar cases, you may experience a partial recovery (${recoveryPercentage}%) within approximately ${timeToRecovery} days. Follow-up care will be important.`;
+      } else {
+        recoveryMessage = `Based on your symptoms and medical history, recovery may be more challenging. I recommend consulting with your healthcare provider for a personalized treatment plan.`;
+      }
+      
+      return {
+        success: true,
+        timeToRecovery,
+        recoveryPercentage,
+        message: recoveryMessage,
+        recommendations: generateRecoveryRecommendations(symptoms, recoveryPercentage, timeToRecovery)
+      };
+    } catch (error) {
+      console.error('Error in recovery prediction:', error);
+      return {
+        success: false,
+        message: "An error occurred during recovery prediction. Please try again later."
+      };
+    }
+  },
+  
+  // Anomaly detection in symptoms
+  detectAnomalies: async (symptoms) => {
+    await initializeModel();
+    
+    if (!autoencoder || !encoder) {
+      return { 
+        anomalies: [],
+        message: "Anomaly detection models not available."
+      };
+    }
+    
+    try {
+      // Tokenize symptoms
+      const tokenizedSymptoms = tokenizeAndPad(symptoms, vocab);
+      
+      // Create input tensor
+      const inputTensor = tf.tensor2d([tokenizedSymptoms]);
+      
+      // Encode and reconstruct
+      const encoded = encoder.predict(inputTensor);
+      const reconstructed = autoencoder.predict(inputTensor);
+      
+      // Convert to arrays
+      const inputArray = await inputTensor.array();
+      const reconstructedArray = await reconstructed.array();
+      
+      // Calculate reconstruction error for each token
+      const errors = [];
+      for (let i = 0; i < tokenizedSymptoms.length; i++) {
+        // Skip padding tokens
+        if (tokenizedSymptoms[i] === vocab['<PAD>']) continue;
+        
+        const word = Object.keys(vocab).find(key => vocab[key] === tokenizedSymptoms[i]) || '<UNK>';
+        
+        // Calculate error (using argmax since these are one-hot encoded)
+        const predictedToken = Array.from(reconstructedArray[0][i]).indexOf(Math.max(...reconstructedArray[0][i]));
+        const reconstructionError = tokenizedSymptoms[i] !== predictedToken ? 1 : 0;
+        
+        errors.push({
+          word,
+          error: reconstructionError
+        });
+      }
+      
+      // Find anomalies (words with high reconstruction error)
+      const anomalies = errors.filter(item => item.error > 0).map(item => item.word);
+      
+      // Clean up tensors
+      inputTensor.dispose();
+      encoded.dispose();
+      reconstructed.dispose();
+      
+      // Generate message
+      let message = "No unusual symptoms detected.";
+      if (anomalies.length > 0) {
+        message = `Unusual symptom patterns detected: ${anomalies.join(', ')}. These may warrant additional attention.`;
+      }
+      
+      return {
+        anomalies,
+        message
+      };
+    } catch (error) {
+      console.error('Error in anomaly detection:', error);
+      return {
+        anomalies: [],
+        message: "Could not analyze symptoms for anomalies."
+      };
+    }
   },
 
   // Translate Message
@@ -228,7 +413,7 @@ export const AIService = {
     }));
   },
 
-  // New method: Personalized Recommendations
+  // Personalized Recommendations
   personalizedRecommendations: (userId, conversation) => {
     // Placeholder logic for personalized recommendations.
     return [
@@ -238,19 +423,59 @@ export const AIService = {
     ];
   },
 
-  // New method: Text Prediction
+  // Text Prediction
   textPrediction: (text) => {
     // Append a predictive phrase as a placeholder.
     return text + " ... and perhaps that's what you'll say next.";
   },
 
-  // New method: Chatbot Response
+  // Chatbot Response
   chatbotResponse: async (query) => {
     try {
       await initializeModel();
       
       // Normalize query
       const normalizedQuery = query.toLowerCase().trim();
+      
+      // Check for recovery-related queries
+      if (normalizedQuery.includes('recover') || 
+          normalizedQuery.includes('prognosis') || 
+          normalizedQuery.includes('heal') ||
+          normalizedQuery.includes('get better')) {
+        
+        // Extract potential symptoms from context
+        const symptomKeywords = ['pain', 'fever', 'cough', 'headache', 'nausea', 'dizzy', 'tired', 'fatigue'];
+        let detectedSymptoms = [];
+        
+        symptomKeywords.forEach(symptom => {
+          if (normalizedQuery.includes(symptom)) {
+            detectedSymptoms.push(symptom);
+          }
+        });
+        
+        if (detectedSymptoms.length > 0) {
+          // If we have encoded models available, try to predict recovery
+          if (encoder && recoveryPredictor) {
+            try {
+              const prediction = await AIService.predictPatientRecovery(
+                detectedSymptoms.join(', '), 
+                "Unknown medical history", 
+                "Standard care"
+              );
+              
+              if (prediction.success) {
+                return prediction.message;
+              }
+            } catch (predictionError) {
+              console.error('Recovery prediction error:', predictionError);
+              // Continue to standard response if prediction fails
+            }
+          }
+          
+          // Fallback to prepared recovery response if model prediction is unavailable
+          return `Based on the symptoms you've mentioned (${detectedSymptoms.join(', ')}), recovery times can vary. For most patients, improvement begins within 1-2 weeks with proper treatment. Please consult your healthcare provider for a personalized assessment.`;
+        }
+      }
       
       // Medical domain-specific responses
       const medicalTerms = {
@@ -271,11 +496,23 @@ export const AIService = {
       // If model exists, try to use it
       if (model) {
         try {
-          // Convert query to model input format
-          const input = tf.tensor2d([Array(20).fill(0)]); // Placeholder input
-          const response = await predictResponse(model, input, categories, responses);
-          input.dispose(); // Clean up tensor
-          return response;
+          // Tokenize the query
+          const tokenizedQuery = tokenizeAndPad(normalizedQuery, vocab);
+          const inputTensor = tf.tensor2d([tokenizedQuery]);
+          
+          // Get prediction
+          const prediction = await model.predict(inputTensor);
+          const categoryIndex = (await prediction.argMax(-1).data())[0];
+          inputTensor.dispose();
+          prediction.dispose();
+          
+          // Find responses in the predicted category
+          const category = categories[categoryIndex % categories.length];
+          const relevantResponses = responses.filter(r => r.category === category);
+          
+          if (relevantResponses.length > 0) {
+            return relevantResponses[Math.floor(Math.random() * relevantResponses.length)].response;
+          }
         } catch (modelError) {
           console.error('Error using model:', modelError);
           // Fall through to basic response
@@ -299,4 +536,37 @@ export const AIService = {
       return "I apologize, but I'm having trouble processing your query. For your safety, please contact your healthcare provider directly.";
     }
   }
+};
+
+// Helper function to generate recovery recommendations
+const generateRecoveryRecommendations = (symptoms, recoveryPercentage, timeToRecovery) => {
+  const recommendations = [];
+  
+  // Default recommendations
+  recommendations.push("Continue to follow your prescribed treatment plan.");
+  recommendations.push("Maintain adequate hydration and rest.");
+  
+  // Add specific recommendations based on symptoms
+  if (symptoms.includes('pain')) {
+    recommendations.push("Use pain management techniques as recommended by your healthcare provider.");
+  }
+  
+  if (symptoms.includes('fever')) {
+    recommendations.push("Monitor temperature regularly and use fever reducers as prescribed.");
+  }
+  
+  if (symptoms.includes('cough')) {
+    recommendations.push("Use humidifiers and stay hydrated to help manage cough symptoms.");
+  }
+  
+  // Add recovery-specific recommendations
+  if (recoveryPercentage < 50) {
+    recommendations.push("Consider scheduling a follow-up with your provider sooner than initially planned.");
+  }
+  
+  if (timeToRecovery > 14) {
+    recommendations.push("Set realistic expectations for recovery and pace your activities accordingly.");
+  }
+  
+  return recommendations;
 };

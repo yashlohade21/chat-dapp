@@ -221,6 +221,48 @@ npm run train-chatbot
 - Performance tracking
 - User feedback integration
 
+## Unsupervised Learning for Patient Recovery Prediction
+
+### Model Architecture
+- **Autoencoder**: Learns patterns in medical text data without explicit labels
+  - Encoder: Compresses input to latent space (32 dimensions)
+  - Decoder: Reconstructs original input from latent representation
+  - Used for anomaly detection in symptoms
+
+- **Recovery Predictor**: Estimates recovery timeline and percentage
+  - Input: Latent representation from encoder
+  - Output: Two values - time to recovery (days) and recovery percentage
+
+### Data Processing
+- MAX_SEQUENCE_LENGTH: 50 tokens for better context understanding
+- VOCAB_SIZE: 15000 words to handle medical terminology
+- Recovery phrases extracted using keywords like 'recovery', 'healing', 'prognosis'
+- Time series data created by mapping temporal phrases to numeric values
+
+### Training Process
+- Supervised component: Classification model for standard responses
+- Unsupervised component: Autoencoder for pattern recognition
+- Recovery predictor: Regression model for recovery metrics
+
+### Implementation Notes
+- Models saved to localStorage with specific keys:
+  - 'medical-chatbot-model': Supervised classification model
+  - 'medical-autoencoder-model': Full autoencoder
+  - 'medical-encoder-model': Encoder component only
+  - 'medical-recovery-model': Recovery prediction model
+- Training done in small batches to prevent memory issues
+- Tensor cleanup essential to prevent memory leaks
+
+### Usage in UI
+- Recovery prediction form collects:
+  - Symptoms (required)
+  - Medical history (optional)
+  - Current treatment (optional)
+- Results displayed with:
+  - Recovery time estimate in days
+  - Recovery percentage with visual progress bar
+  - Personalized recommendations based on symptoms
+
 ## Next.js Configuration
 - Project uses ES modules (package.json "type": "module")
 - Use `export default` instead of `module.exports` in .js files
@@ -647,3 +689,45 @@ npm run train-chatbot
 - Response quality monitoring
 - Performance tracking
 - User feedback integration
+
+## Unsupervised Learning for Patient Recovery Prediction
+
+### Model Architecture
+- **Autoencoder**: Learns patterns in medical text data without explicit labels
+  - Encoder: Compresses input to latent space (32 dimensions)
+  - Decoder: Reconstructs original input from latent representation
+  - Used for anomaly detection in symptoms
+
+- **Recovery Predictor**: Estimates recovery timeline and percentage
+  - Input: Latent representation from encoder
+  - Output: Two values - time to recovery (days) and recovery percentage
+
+### Data Processing
+- MAX_SEQUENCE_LENGTH: 50 tokens for better context understanding
+- VOCAB_SIZE: 15000 words to handle medical terminology
+- Recovery phrases extracted using keywords like 'recovery', 'healing', 'prognosis'
+- Time series data created by mapping temporal phrases to numeric values
+
+### Training Process
+- Supervised component: Classification model for standard responses
+- Unsupervised component: Autoencoder for pattern recognition
+- Recovery predictor: Regression model for recovery metrics
+
+### Implementation Notes
+- Models saved to localStorage with specific keys:
+  - 'medical-chatbot-model': Supervised classification model
+  - 'medical-autoencoder-model': Full autoencoder
+  - 'medical-encoder-model': Encoder component only
+  - 'medical-recovery-model': Recovery prediction model
+- Training done in small batches to prevent memory issues
+- Tensor cleanup essential to prevent memory leaks
+
+### Usage in UI
+- Recovery prediction form collects:
+  - Symptoms (required)
+  - Medical history (optional)
+  - Current treatment (optional)
+- Results displayed with:
+  - Recovery time estimate in days
+  - Recovery percentage with visual progress bar
+  - Personalized recommendations based on symptoms
