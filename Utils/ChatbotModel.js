@@ -1,46 +1,28 @@
 import * as tf from '@tensorflow/tfjs';
 
-export const buildChatbotModel = (vocabSize, numCategories, embeddingDim = 128, rnnUnits = 256) => {
+export const buildChatbotModel = (vocabSize, embeddingDim = 32, rnnUnits = 64) => {
   const model = tf.sequential();
   
-  // Input embedding layer
+  // Even smaller embedding dimension
   model.add(tf.layers.embedding({
     inputDim: vocabSize,
     outputDim: embeddingDim,
     maskZero: true
   }));
   
-  // Bidirectional LSTM for better context understanding
-  model.add(tf.layers.bidirectional({
-    layer: tf.layers.lstm({
-      units: rnnUnits,
-      returnSequences: true,
-      recurrentDropout: 0.2
-    })
-  }));
-  
-  // Another LSTM layer
+  // Single LSTM layer with minimal units
   model.add(tf.layers.lstm({
     units: rnnUnits,
-    returnSequences: false,
+    returnSequences: true,
     recurrentDropout: 0.2
   }));
   
-  // Dense layers with dropout for regularization
+  // Dense layer for classification
   model.add(tf.layers.dense({
-    units: rnnUnits,
-    activation: 'relu'
-  }));
-  
-  model.add(tf.layers.dropout(0.5));
-  
-  // Output layer for category classification
-  model.add(tf.layers.dense({
-    units: numCategories,
+    units: vocabSize,
     activation: 'softmax'
   }));
   
-  // Compile with categorical crossentropy for multi-class classification
   model.compile({
     optimizer: tf.train.adam(0.001),
     loss: 'categoricalCrossentropy',

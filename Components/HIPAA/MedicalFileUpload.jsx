@@ -242,7 +242,11 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       if (!response.success) {
         throw new Error(`Failed to fetch file ${file.name} from IPFS: ${response.error}`);
       }
-      console.log('File fetched successfully');
+      console.log(`Successfully fetched file from ${response.gateway}, size: ${response.size} bytes`);
+
+      if (!response.data || response.size === 0) {
+        throw new Error('Retrieved file is empty or invalid');
+      }
 
       console.log('Attempting decryption...');
       const decryptionResult = await decryptFileWithPassphrase(
@@ -276,7 +280,8 @@ const MedicalFileUpload = ({ onUpload, account }) => {
 
       setDecryptedFiles(prev => [...prev, {
         ...file,
-        content: url
+        content: url,
+        size: blob.size
       }]);
 
       setTimeout(() => {

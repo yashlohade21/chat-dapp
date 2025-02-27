@@ -116,16 +116,20 @@ export const IPFSService = {
           
           console.log(`Successfully fetched file from ${gateway}, size: ${response.data.length} bytes`);
           
+          // Convert ArrayBuffer to base64
           const base64Data = Buffer.from(response.data).toString('base64');
           
           return {
             success: true,
             data: base64Data,
-            gateway: gateway
+            gateway: gateway,
+            size: response.data.length
           };
         } catch (error) {
           console.error(`IPFS fetch attempt ${i + 1} failed for gateway ${gateway}:`, error);
           lastError = error;
+          
+          // Add delay between retries
           if (i < retries - 1) {
             await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
           }
@@ -135,7 +139,8 @@ export const IPFSService = {
     
     return {
       success: false,
-      error: lastError?.message || 'Failed to fetch file after trying all gateways'
+      error: lastError?.message || 'Failed to fetch file after trying all gateways',
+      size: 0
     };
   }
 };
