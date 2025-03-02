@@ -1,179 +1,301 @@
 import * as tf from '@tensorflow/tfjs';
-import fs from 'fs';
-import path from 'path';
+import medicalResponses from '../dataset/chatbot_training_data.json' assert { type: 'json' };
 import { loadXMLDataset } from './xmlDataPrep.js';
 
-const MAX_SEQUENCE_LENGTH = 50; // Increased for better context understanding
-const VOCAB_SIZE = 15000; // Increased for medical vocabulary
+// Maximum sequence length for input text
+const MAX_SEQUENCE_LENGTH = 50;
+// Maximum vocabulary size
+const VOCAB_SIZE = 5000;
 
-export const loadDataset = async () => {
-  // Load and combine datasets
-  const jsonPath = path.join(process.cwd(), 'dataset', 'chatbot_training_data.json');
-  const jsonData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-  const xmlData = await loadXMLDataset();
+// Tokenize and pad a text input
+export const tokenizeAndPad = (text, vocab) => {
+  if (!text) return Array(MAX_SEQUENCE_LENGTH).fill(vocab['<PAD>']);
   
-  // Combine conversations
-  const allConversations = [...jsonData.conversations, ...xmlData];
+  // Tokenize by splitting on whitespace and converting to lowercase
+  const tokens = text.toLowerCase().split(/\s+/);
   
-  // Build vocabulary from all text
-  const allText = allConversations.flatMap(pair => [pair.input, pair.response]);
-  const vocab = buildVocabulary(allText);
+  // Convert tokens to indices using vocabulary
+  const indices = tokens.map(token => vocab[token] || vocab['<UNK>']);
   
-  // Process data for supervised component
-  const inputSequences = allConversations.map(pair => tokenizeAndPad(pair.input, vocab));
-  const targetSequences = allConversations.map(pair => {
-    const sequence = tokenizeAndPad(pair.response, vocab);
-    return tf.oneHot(sequence, Object.keys(vocab).length).arraySync();
-  });
-  
-  // Process data for unsupervised component (autoencoder)
-  const allSequences = allConversations.flatMap(pair => [
-    tokenizeAndPad(pair.input, vocab),
-    tokenizeAndPad(pair.response, vocab)
-  ]);
-  
-  // Extract medical recovery data
-  const recoveryPhrases = extractRecoveryPhrases(allConversations);
-  
-  console.log(`Vocabulary size: ${Object.keys(vocab).length}`);
-  console.log(`Total training pairs: ${allConversations.length}`);
-  console.log(`Recovery phrases extracted: ${recoveryPhrases.length}`);
-  
-  return {
-    inputSequences,
-    targetSequences,
-    allSequences,
-    recoveryPhrases,
-    vocabSize: Object.keys(vocab).length,
-    vocab,
-    categories: jsonData.categories
-  };
-};
-
-const buildVocabulary = (texts) => {
-  const wordFreq = {};
-  const medicalTerms = new Set([
-    'diagnosis', 'treatment', 'symptoms', 'medication', 'prescription',
-    'doctor', 'hospital', 'patient', 'medical', 'health', 'disease',
-    'condition', 'therapy', 'clinical', 'healthcare', 'recovery',
-    'improvement', 'prognosis', 'healing', 'progress', 'outcome',
-    'remission', 'rehabilitation', 'complications', 'relapse'
-  ]);
-  
-  texts.forEach(text => {
-    text.toLowerCase().split(/\s+/).forEach(word => {
-      // Prioritize medical terms by giving them higher frequency
-      if (medicalTerms.has(word)) {
-        wordFreq[word] = (wordFreq[word] || 0) + 10;
-      } else {
-        wordFreq[word] = (wordFreq[word] || 0) + 1;
-      }
-    });
-  });
-  
-  // Sort by frequency and take top VOCAB_SIZE words
-  const sortedWords = Object.entries(wordFreq)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, VOCAB_SIZE - 2)
-    .map(([word]) => word);
-  
-  const vocab = {
-    '<PAD>': 0,
-    '<UNK>': 1,
-    ...Object.fromEntries(sortedWords.map((word, i) => [word, i + 2]))
-  };
-  
-  return vocab;
-};
-
-const tokenizeAndPad = (text, vocab) => {
-  const tokens = text.toLowerCase().split(/\s+/)
-    .map(word => vocab[word] || vocab['<UNK>']);
-  
-  if (tokens.length > MAX_SEQUENCE_LENGTH) {
-    return tokens.slice(0, MAX_SEQUENCE_LENGTH);
+  // Pad or truncate to MAX_SEQUENCE_LENGTH
+  if (indices.length < MAX_SEQUENCE_LENGTH) {
+    return [...indices, ...Array(MAX_SEQUENCE_LENGTH - indices.length).fill(vocab['<PAD>'])];
+  } else {
+    return indices.slice(0, MAX_SEQUENCE_LENGTH);
   }
-  return [...tokens, ...Array(MAX_SEQUENCE_LENGTH - tokens.length).fill(vocab['<PAD>'])];
 };
 
-const extractRecoveryPhrases = (conversations) => {
-  const recoveryKeywords = [
-    'improved', 'recovery', 'better', 'healing', 'progress',
-    'remission', 'outcome', 'prognosis', 'rehabilitation'
-  ];
-  
-  // Extract conversations related to recovery
-  return conversations.filter(conv => {
-    const text = (conv.input + ' ' + conv.response).toLowerCase();
-    return recoveryKeywords.some(keyword => text.includes(keyword));
+// Create one-hot encoded target sequences
+const createTargetSequences = (categories, categoryIndices) => {
+  return categoryIndices.map(index => {
+    const oneHot = Array(categories.length).fill(0);
+    oneHot[index] = 1;
+    return oneHot;
   });
 };
 
-// New function to create time-series data from recovery phrases
+// Load and prepare dataset
+export const loadDataset = async () => {
+  try {
+    console.log('Loading dataset...');
+    
+    // Get conversations from JSON dataset
+    const { conversations, categories } = medicalResponses;
+    
+    // Try to load additional XML dataset if available
+    let xmlData = [];
+    try {
+      xmlData = await loadXMLDataset();
+      console.log(`Loaded ${xmlData.length} additional items from XML dataset`);
+    } catch (error) {
+      console.warn('Could not load XML dataset:', error.message);
+    }
+    
+    // Combine datasets
+    const allConversations = [
+      ...conversations,
+      ...xmlData.map(item => ({
+        input: item.question,
+        response: item.answer,
+        category: item.category || 'medical_info'
+      }))
+    ];
+    
+    // Build vocabulary
+    const allText = allConversations.flatMap(pair => [pair.input, pair.response]);
+    const words = new Set();
+    allText.forEach(text => text.toLowerCase().split(/\s+/).forEach(word => words.add(word)));
+    
+    // Create vocabulary with special tokens
+    const vocab = {
+      '<PAD>': 0,
+      '<UNK>': 1,
+    };
+    
+    // Add words to vocabulary (limit to VOCAB_SIZE)
+    const wordArray = Array.from(words);
+    for (let i = 0; i < Math.min(wordArray.length, VOCAB_SIZE - 2); i++) {
+      vocab[wordArray[i]] = i + 2;
+    }
+    
+    // Tokenize inputs
+    const inputSequences = allConversations.map(pair => 
+      tokenizeAndPad(pair.input, vocab)
+    );
+    
+    // Get category indices
+    const categoryIndices = allConversations.map(pair => 
+      categories.indexOf(pair.category)
+    );
+    
+    // Create one-hot encoded targets
+    const targetSequences = createTargetSequences(categories, categoryIndices);
+    
+    // Create all sequences for unsupervised learning
+    const allSequences = allConversations.flatMap(pair => [
+      tokenizeAndPad(pair.input, vocab),
+      tokenizeAndPad(pair.response, vocab)
+    ]);
+    
+    // Extract recovery-related phrases for recovery prediction
+    const recoveryPhrases = allConversations
+      .filter(pair => 
+        pair.category === 'recovery' || 
+        pair.input.toLowerCase().includes('recover') ||
+        pair.response.toLowerCase().includes('recover') ||
+        pair.input.toLowerCase().includes('healing') ||
+        pair.response.toLowerCase().includes('healing') ||
+        pair.input.toLowerCase().includes('prognosis') ||
+        pair.response.toLowerCase().includes('prognosis')
+      )
+      .map(pair => ({
+        text: pair.response,
+        input: pair.input
+      }));
+    
+    console.log(`Dataset prepared: ${inputSequences.length} conversations, ${Object.keys(vocab).length} vocabulary items, ${recoveryPhrases.length} recovery phrases`);
+    
+    return {
+      inputSequences,
+      targetSequences,
+      allSequences,
+      recoveryPhrases,
+      vocabSize: Object.keys(vocab).length,
+      vocab,
+      categories
+    };
+  } catch (error) {
+    console.error('Error loading dataset:', error);
+    throw error;
+  }
+};
+
+// Create time series data for recovery prediction
 export const createRecoveryTimeSeries = (recoveryPhrases, vocab) => {
-  // Extract temporal indicators and health states
+  if (!recoveryPhrases || recoveryPhrases.length === 0) return [];
+  
   const timeSeriesData = [];
   
-  // Map temporal phrases to numeric values (days)
-  const temporalMap = {
-    'immediately': 1,
-    'few hours': 0.5,
-    'day': 1,
-    'days': 3,
-    'week': 7,
-    'weeks': 14, 
-    'month': 30,
-    'months': 90,
-    'year': 365
-  };
+  // Extract time information from recovery phrases
+  const timeRegex = /(\d+)(?:\s*-\s*\d+)?\s*(day|week|month|hour)/i;
+  const percentRegex = /(\d+)(?:\s*-\s*\d+)?\s*(%|percent)/i;
   
-  // Simplistic extraction of temporal patterns
   recoveryPhrases.forEach(phrase => {
-    const text = phrase.input + ' ' + phrase.response;
-    let timePoint = 0;
-    let improvement = 0;
+    // Tokenize the text
+    const tokenized = tokenizeAndPad(phrase.text, vocab);
     
     // Extract time information
-    for (const [term, value] of Object.entries(temporalMap)) {
-      if (text.includes(term)) {
-        // Extract numbers before temporal terms
-        const match = text.match(new RegExp(`(\\d+)\\s+${term}`));
-        if (match) {
-          timePoint = parseInt(match[1]) * value;
-        } else {
-          timePoint = value;
-        }
-        break;
+    let timePoint = 0;
+    const timeMatch = phrase.text.match(timeRegex);
+    if (timeMatch) {
+      const value = parseInt(timeMatch[1], 10);
+      const unit = timeMatch[2].toLowerCase();
+      
+      // Convert to days
+      if (unit.includes('hour')) {
+        timePoint = value / 24;
+      } else if (unit.includes('day')) {
+        timePoint = value;
+      } else if (unit.includes('week')) {
+        timePoint = value * 7;
+      } else if (unit.includes('month')) {
+        timePoint = value * 30;
+      }
+    } else {
+      // If no explicit time, estimate based on keywords
+      if (phrase.text.includes('quick') || phrase.text.includes('fast')) {
+        timePoint = 3;
+      } else if (phrase.text.includes('soon')) {
+        timePoint = 7;
+      } else if (phrase.text.includes('gradual')) {
+        timePoint = 14;
+      } else if (phrase.text.includes('long')) {
+        timePoint = 30;
+      } else {
+        timePoint = 10; // Default
       }
     }
     
-    // Extract improvement level
-    if (text.includes('full recovery') || text.includes('completely recovered')) {
-      improvement = 1.0;
-    } else if (text.includes('significant improvement') || text.includes('major progress')) {
-      improvement = 0.8;
-    } else if (text.includes('moderate improvement') || text.includes('some progress')) {
-      improvement = 0.5;
-    } else if (text.includes('slight improvement') || text.includes('minor progress')) {
-      improvement = 0.3;
-    } else if (text.includes('no improvement') || text.includes('no change')) {
-      improvement = 0.0;
+    // Extract improvement percentage
+    let improvement = 0;
+    const percentMatch = phrase.text.match(percentRegex);
+    if (percentMatch) {
+      improvement = parseInt(percentMatch[1], 10) / 100;
     } else {
-      // Default modest improvement
-      improvement = 0.4;
+      // If no explicit percentage, estimate based on keywords
+      if (phrase.text.includes('full') || phrase.text.includes('complete')) {
+        improvement = 1.0;
+      } else if (phrase.text.includes('significant') || phrase.text.includes('substantial')) {
+        improvement = 0.8;
+      } else if (phrase.text.includes('partial')) {
+        improvement = 0.5;
+      } else if (phrase.text.includes('minimal') || phrase.text.includes('slight')) {
+        improvement = 0.3;
+      } else {
+        improvement = 0.7; // Default
+      }
     }
     
-    if (timePoint > 0) {
-      timeSeriesData.push({
-        text: text,
-        timePoint: timePoint,
-        improvement: improvement,
-        tokenized: tokenizeAndPad(text, vocab)
-      });
-    }
+    // Add to time series data
+    timeSeriesData.push({
+      tokenized,
+      timePoint,
+      improvement
+    });
   });
   
   return timeSeriesData;
 };
 
-export { tokenizeAndPad }; // Export for use in other modules
+export const trainModels = async (progressCallback) => {
+  try {
+    // Load and preprocess dataset
+    const { inputSequences, targetSequences, allSequences, recoveryPhrases, vocabSize } = await loadDataset();
+    
+    // Build and train supervised model
+    progressCallback(10, "Building supervised model...");
+    const model = buildChatbotModel(vocabSize);
+    
+    // Train supervised model
+    const inputTensor = tf.tensor2d(inputSequences);
+    const targetTensor = tf.tensor2d(targetSequences);
+    
+    await model.fit(inputTensor, targetTensor, {
+      epochs: 10,
+      batchSize: 32,
+      validationSplit: 0.2,
+      callbacks: {
+        onEpochEnd: (epoch, logs) => {
+          progressCallback(10 + (epoch / 10) * 20, `Training supervised model (epoch ${epoch + 1}/10)...`);
+        }
+      }
+    });
+    
+    // Save supervised model
+    await model.save('localstorage://medical-chatbot-model');
+    
+    // Build and train autoencoder
+    progressCallback(30, "Building autoencoder...");
+    const { autoencoder, encoder } = buildAutoencoder(vocabSize);
+    
+    const autoencoderInput = tf.tensor2d(allSequences);
+    await autoencoder.fit(autoencoderInput, autoencoderInput, {
+      epochs: 5,
+      batchSize: 32,
+      callbacks: {
+        onEpochEnd: (epoch, logs) => {
+          progressCallback(30 + (epoch / 5) * 20, `Training autoencoder (epoch ${epoch + 1}/5)...`);
+        }
+      }
+    });
+    
+    // Save autoencoder models
+    await autoencoder.save('localstorage://medical-autoencoder-model');
+    await encoder.save('localstorage://medical-encoder-model');
+    
+    // Build and train recovery predictor
+    progressCallback(60, "Building recovery predictor...");
+    const recoveryPredictor = buildRecoveryPredictor();
+    
+    const recoveryData = createRecoveryTimeSeries(recoveryPhrases, vocab);
+    const recoveryInput = tf.tensor2d(recoveryData.map(item => item.tokenized));
+    const recoveryTarget = tf.tensor2d(recoveryData.map(item => [item.timePoint, item.improvement]));
+    
+    await recoveryPredictor.fit(recoveryInput, recoveryTarget, {
+      epochs: 10,
+      batchSize: 16,
+      callbacks: {
+        onEpochEnd: (epoch, logs) => {
+          progressCallback(60 + (epoch / 10) * 20, `Training recovery predictor (epoch ${epoch + 1}/10)...`);
+        }
+      }
+    });
+    
+    // Save recovery predictor
+    await recoveryPredictor.save('localstorage://medical-recovery-model');
+    
+    // Build and train self-learning model
+    progressCallback(80, "Building self-learning model...");
+    const selfLearningModel = buildSelfLearningModel(vocabSize);
+    
+    const selfLearningInput = tf.tensor2d(allSequences);
+    await selfLearningModel.fit(selfLearningInput, selfLearningInput, {
+      epochs: 5,
+      batchSize: 32,
+      callbacks: {
+        onEpochEnd: (epoch, logs) => {
+          progressCallback(80 + (epoch / 5) * 20, `Training self-learning model (epoch ${epoch + 1}/5)...`);
+        }
+      }
+    });
+    
+    // Save self-learning model
+    await selfLearningModel.save('localstorage://self-learning-model');
+    
+    progressCallback(100, "Training complete!");
+    return { success: true };
+  } catch (error) {
+    console.error('Error training models:', error);
+    throw new Error(`Training failed: ${error.message}`);
+  }
+};

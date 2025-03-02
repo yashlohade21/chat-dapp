@@ -143,3 +143,4 @@ npx hardhat run scripts/deploy.js
 This decentralized chat application represents a significant step forward in secure, private communication systems, particularly for healthcare applications. By leveraging blockchain technology and modern web development practices, it provides a robust platform for confidential message exchange while maintaining user privacy and data security.
 
 The application's architecture ensures that messages and user data are stored on the blockchain, making the system resistant to censorship and central points of failure. The integration with MetaMask provides a secure authentication mechanism, while the React-based frontend delivers a smooth and intuitive user experience.
+

@@ -4,16 +4,16 @@
   right: 20px;
   width: 380px;
   height: 520px;
-  background-color: #fff;
+  background-color: #202123;
   border-radius: 16px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 1000;
-  color: #333;
+  color: #f1f1f1;
   transition: all 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .chatbot_trigger {
@@ -23,7 +23,7 @@
   width: 65px;
   height: 65px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #4a6fa5 0%, #3a5a8c 100%);
+  background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
   color: white;
   border: none;
   font-size: 28px;
@@ -31,14 +31,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 15px rgba(74, 111, 165, 0.4);
+  box-shadow: 0 4px 15px rgba(25, 118, 210, 0.4);
   z-index: 1000;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .chatbot_trigger:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(74, 111, 165, 0.5);
+  box-shadow: 0 6px 20px rgba(25, 118, 210, 0.5);
 }
 
 .chatbot_header {
@@ -46,7 +46,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 18px 20px;
-  background: linear-gradient(135deg, #4a6fa5 0%, #3a5a8c 100%);
+  background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
   color: white;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -86,7 +86,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background-color: #f8f9fa;
+  background-color: #202123;
 }
 
 .message {
@@ -96,6 +96,7 @@
   word-break: break-word;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   animation: fadeIn 0.3s ease;
+  position: relative;
 }
 
 @keyframes fadeIn {
@@ -105,24 +106,25 @@
 
 .user {
   align-self: flex-end;
-  background: linear-gradient(135deg, #4a6fa5 0%, #3a5a8c 100%);
+  background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
   color: white;
   border-radius: 18px 18px 0 18px;
 }
 
 .bot {
   align-self: flex-start;
-  background-color: white;
+  background-color: #343541;
   border-radius: 18px 18px 18px 0;
   display: flex;
   gap: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f1f1f1;
 }
 
 .error {
   align-self: center;
-  background-color: #ffebee;
-  color: #c62828;
+  background-color: rgba(198, 40, 40, 0.2);
+  color: #ff5252;
   border-radius: 10px;
   width: 90%;
   border-left: 4px solid #c62828;
@@ -131,7 +133,7 @@
 .bot_avatar {
   font-size: 22px;
   margin-right: 5px;
-  background-color: #e3f2fd;
+  background-color: #0d47a1;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -143,7 +145,7 @@
 
 .typing_indicator {
   font-style: italic;
-  color: #757575;
+  color: #a0a0a0;
   display: flex;
   align-items: center;
 }
@@ -164,25 +166,29 @@
 .input_container {
   display: flex;
   padding: 15px;
-  border-top: 1px solid #eee;
-  background-color: black;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #202123;
 }
 
 .input {
   flex: 1;
   padding: 12px 16px;
-  border: 1px solid #ddd;
+  border: 1px solid #444;
   border-radius: 24px;
   outline: none;
   font-size: 14px;
   transition: border 0.2s, box-shadow 0.2s;
-  background-color: #000000;
+  background-color: #343541;
+  color: white;
 }
 
 .input:focus {
-  border-color: #4a6fa5;
-  box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
-  background-color: black;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+.input::placeholder {
+  color: #a0a0a0;
 }
 
 .send_btn {
@@ -190,7 +196,7 @@
   padding: 0;
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #4a6fa5 0%, #3a5a8c 100%);
+  background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
   color: white;
   border: none;
   border-radius: 50%;
@@ -211,7 +217,7 @@
 }
 
 .send_btn:disabled {
-  background-color: #cccccc;
+  background-color: #444;
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -219,12 +225,13 @@
 .welcome_message {
   display: flex;
   align-items: flex-start;
-  background-color: white;
+  background-color: #343541;
   padding: 18px;
   border-radius: 12px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f1f1f1;
 }
 
 .welcome_message p {
@@ -241,33 +248,33 @@
 
 .suggestions_title {
   font-size: 14px;
-  color: #757575;
+  color: #1976d2;
   margin-bottom: 8px;
   font-weight: 500;
 }
 
 .suggestion_btn {
-  background-color: white;
-  border: 1px solid #e0e0e0;
+  background-color: #343541;
+  border: 1px solid #444;
   border-radius: 18px;
   padding: 10px 14px;
   text-align: left;
   cursor: pointer;
   font-size: 13px;
   transition: all 0.2s;
-  color: #4a6fa5;
+  color: #1976d2;
 }
 
 .suggestion_btn:hover {
-  background-color: #e3f2fd;
-  border-color: #bbdefb;
+  background-color: rgba(25, 118, 210, 0.1);
+  border-color: #1976d2;
   transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .error_message {
-  background-color: #ffebee;
-  color: #c62828;
+  background-color: rgba(198, 40, 40, 0.2);
+  color: #ff5252;
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 15px;
@@ -275,18 +282,19 @@
 }
 
 .recoveryForm {
-  background-color: white;
+  background-color: #343541;
   border-radius: 12px;
   padding: 20px;
   margin: 15px 0;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color: #f1f1f1;
 }
 
 .recoveryForm h4 {
   margin-top: 0;
   margin-bottom: 12px;
-  color: #4a6fa5;
+  color: #1976d2;
   font-size: 16px;
   font-weight: 600;
 }
@@ -300,26 +308,30 @@
   margin-bottom: 6px;
   font-size: 14px;
   font-weight: 500;
-  color: #555;
+  color: #ddd;
 }
 
 .textArea {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid #444;
   border-radius: 8px;
   resize: none;
   font-family: inherit;
   font-size: 14px;
   transition: border 0.2s, box-shadow 0.2s;
-  background-color: #f8f9fa;
+  background-color: #383a42;
+  color: white;
 }
 
 .textArea:focus {
-  border-color: #4a6fa5;
-  box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
   outline: none;
-  background-color: white;
+}
+
+.textArea::placeholder {
+  color: #a0a0a0;
 }
 
 .formActions {
@@ -331,21 +343,22 @@
 
 .cancelBtn {
   padding: 10px 16px;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
+  background-color: #444;
+  border: 1px solid #555;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s;
+  color: #ddd;
 }
 
 .cancelBtn:hover {
-  background-color: #e0e0e0;
+  background-color: #555;
 }
 
 .predictBtn {
   padding: 10px 16px;
-  background: linear-gradient(135deg, #4a6fa5 0%, #3a5a8c 100%);
+  background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -357,11 +370,11 @@
 
 .predictBtn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(74, 111, 165, 0.3);
+  box-shadow: 0 2px 5px rgba(25, 118, 210, 0.3);
 }
 
 .predictBtn:disabled {
-  background-color: #cccccc;
+  background-color: #444;
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -375,8 +388,8 @@
 
 .actionButton {
   padding: 8px 14px;
-  background-color: #e3f2fd;
-  border: 1px solid #bbdefb;
+  background-color: rgba(25, 118, 210, 0.1);
+  border: 1px solid #1976d2;
   border-radius: 18px;
   font-size: 13px;
   cursor: pointer;
@@ -385,17 +398,17 @@
 }
 
 .actionButton:hover {
-  background-color: #bbdefb;
+  background-color: rgba(25, 118, 210, 0.2);
   transform: translateY(-1px);
 }
 
 .recoveryDetails {
   margin-top: 12px;
   padding: 15px;
-  background-color: #e8f5e9;
+  background-color: rgba(46, 125, 50, 0.1);
   border-radius: 10px;
-  border: 1px solid #c8e6c9;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(46, 125, 50, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .recoveryMetrics {
@@ -411,24 +424,30 @@
 
 .metricLabel {
   font-size: 12px;
-  color: #757575;
+  color: #a0a0a0;
   margin-bottom: 4px;
 }
 
 .metricValue {
   font-weight: 600;
-  color: #2e7d32;
+  color: #4caf50;
   font-size: 16px;
 }
 
 .recoveryProgress {
   height: 10px;
-  background-color: #e0e0e0;
+  background-color: #444;
   border-radius: 5px;
   overflow: hidden;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-  height: 100%;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
+
+.progressBar {
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50 0%, #2e7d32 100%);
+  transition: width 0.8s ease-in-out;
+}
+
 .suggestions_grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -466,7 +485,2414 @@
 .typing_indicator {
   animation: pulse 1.5s infinite;
 }
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modeToggle {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0.7;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.modeToggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+}
+
+.modeActive {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+.clearBtn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0.7;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.clearBtn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+}
+
+.analysisBadge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 10px;
+  padding: 3px 6px;
+  border-radius: 10px;
+  background-color: #1976d2;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.confidence-high {
+  background-color: #2e7d32;
+}
+
+.confidence-medium {
+  background-color: #f57c00;
+}
+
+.confidence-low {
+  background-color: #c62828;
+}
+
+.system {
+  align-self: center;
+  background-color: #383a42;
+  color: #a0a0a0;
+  font-style: italic;
+  max-width: 90%;
+  border-radius: 10px;
+  border-left: 3px solid #666;
+}
+
+.system_icon {
+  font-size: 16px;
+  margin-right: 8px;
+  color: #a0a0a0;
+}
+
+.trainModelBtn {
+  background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 15px auto;
+  transition: all 0.2s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.trainModelBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+.trainModelBtn:disabled {
+  background-color: #444;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.trainingProgress {
+  background-color: #343541;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 15px 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color: #f1f1f1;
+}
+
+.trainingProgress h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #1976d2;
+  font-size: 16px;
+  font-weight: 600;
+}
+
 .progressBar {
-  background: linear-gradient(90deg, #66bb6a 0%, #43a047 100%);
-  transition: width 0.8s ease-in-out;
+  height: 8px;
+  background-color: #444;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 15px 0;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #1976d2 0%, #0d47a1 100%);
+  transition: width 0.3s ease;
+}
+
+.progressLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #a0a0a0;
+  margin-bottom: 10px;
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
+}
+
+@keyframes neuronPulse {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px #1976d2; }
+  100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.learningPulse {
+  animation: learningPulse 2s infinite;
+}
+
+@keyframes learningPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(25, 118, 210, 0.5); }
+  100% { transform: scale(1); }
+}
+
+.learningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-top: 5px;
+  width: fit-content;
+  transition: all 0.3s ease;
+}
+
+/* Fix the incomplete CSS rule */
+.learningIndicator::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  animation: neuronPulse 1.5s infinite;
 }

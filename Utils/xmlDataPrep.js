@@ -18,7 +18,7 @@ export const loadXMLDataset = async () => {
   const conversations = [];
   
   for (const file of xmlFiles) {
-    console.log(`Processing file: ${file}`);
+    console.log(`Processing XML file: ${file}`);
     const xmlContent = fs.readFileSync(path.join(datasetPath, file), 'utf8');
     try {
       const result = await parser.parseStringPromise(xmlContent);
@@ -28,6 +28,7 @@ export const loadXMLDataset = async () => {
         result.Questions['Original-Question'].forEach(question => {
           let questionText = '';
           let answerText = '';
+          let categoryText = 'medical_info'; // Default category
 
           // Extract question text from the XML structure
           if (question._) {
@@ -43,6 +44,22 @@ export const loadXMLDataset = async () => {
             answerText = question.Answer[0]._;
           }
 
+          // Try to extract category from question type or mapping
+          if (question.Type && question.Type[0]._) {
+            const typeText = question.Type[0]._.toLowerCase();
+            
+            // Map XML types to our categories
+            if (typeText.includes('treatment')) {
+              categoryText = 'treatment';
+            } else if (typeText.includes('diagnosis')) {
+              categoryText = 'symptom_assessment';
+            } else if (typeText.includes('prevention')) {
+              categoryText = 'preventive_care';
+            } else if (typeText.includes('recovery')) {
+              categoryText = 'recovery';
+            }
+          }
+
           // Clean and validate the texts
           questionText = questionText.trim();
           answerText = answerText.trim();
@@ -55,8 +72,9 @@ export const loadXMLDataset = async () => {
             }
 
             conversations.push({
-              input: questionText,
-              response: answerText
+              question: questionText,
+              answer: answerText,
+              category: categoryText
             });
           }
         });
@@ -69,11 +87,16 @@ export const loadXMLDataset = async () => {
 
   console.log(`Successfully processed ${conversations.length} medical Q&A pairs from XML files`);
   
-  // Log some sample conversations for verification
+  // Log sample conversations for verification
   if (conversations.length > 0) {
-    console.log('\nSample Q&A pair:');
-    console.log('Q:', conversations[0].input);
-    console.log('A:', conversations[0].response);
+    console.log('\nSample Q&A pairs:');
+    for (let i = 0; i < Math.min(3, conversations.length); i++) {
+      console.log(`Example ${i+1}:`);
+      console.log('Q:', conversations[i].question);
+      console.log('A:', conversations[i].answer);
+      console.log('Category:', conversations[i].category);
+      console.log('---');
+    }
   }
   
   return conversations;

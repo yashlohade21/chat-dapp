@@ -3,7 +3,8 @@ import { loadDataset, createRecoveryTimeSeries } from '../Utils/dataPrep.js';
 import { 
   buildChatbotModel, 
   buildAutoencoder, 
-  buildRecoveryPredictor 
+  buildRecoveryPredictor,
+  buildSelfLearningModel
 } from '../Utils/ChatbotModel.js';
 
 const trainModel = async () => {
@@ -119,9 +120,11 @@ const trainModel = async () => {
         // Encode to latent features
         const features = encoder.predict(inputTensor);
         
-        // Create target tensor with timePoint and improvement
+        // Create target tensor with timePoint, improvement, and uncertainty
         const targetTensor = tf.tensor2d(batch.map(item => [
-          item.timePoint, item.improvement
+          item.timePoint, 
+          item.improvement,
+          0.1 // Initial uncertainty value
         ]));
         
         console.log(`Training recovery predictor on batch ${i/batchSize + 1}/${Math.ceil(timeSeriesData.length/batchSize)}`);
@@ -148,6 +151,99 @@ const trainModel = async () => {
       console.log('No valid time series data extracted, skipping recovery predictor training');
     }
   }
+  
+  // Build and train self-learning model (ChatGPT-like capabilities)
+  console.log('Building self-learning model for ChatGPT-like capabilities...');
+  const selfLearningModel = buildSelfLearningModel(vocabSize, 50);
+  
+  // Train self-learning model in chunks
+  const selfLearningChunkSize = Math.min(32, allSequences.length);
+  
+  for (let i = 0; i < allSequences.length; i += selfLearningChunkSize) {
+    const endIdx = Math.min(i + selfLearningChunkSize, allSequences.length);
+    const sequenceChunk = allSequences.slice(i, endIdx);
+    
+    // Create input tensor
+    const inputTensor = tf.tensor2d(sequenceChunk);
+    
+    // Create mock output targets for each prediction task
+    // Response type (expanded to 20 categories)
+    const responseTypeTarget = tf.oneHot(
+      Array.from({length: sequenceChunk.length}, () => 
+        Math.floor(Math.random() * 20)
+      ),
+      20
+    );
+    
+    // Sentiment (expanded to 5 categories)
+    const sentimentTarget = tf.oneHot(
+      Array.from({length: sequenceChunk.length}, () => 
+        Math.floor(Math.random() * 5)
+      ),
+      5
+    );
+    
+    // Intent (expanded to 12 categories)
+    const intentTarget = tf.oneHot(
+      Array.from({length: sequenceChunk.length}, () => 
+        Math.floor(Math.random() * 12)
+      ),
+      12
+    );
+    
+    // Next word prediction
+    const nextWordTarget = tf.oneHot(
+      sequenceChunk.map(seq => {
+        const shifted = [...seq.slice(1), vocab['<PAD>']];
+        return shifted;
+      }).flat(),
+      vocabSize
+    ).reshape([sequenceChunk.length, sequenceChunk[0].length, vocabSize]);
+    
+    // Context understanding (8 categories)
+    const contextTarget = tf.oneHot(
+      Array.from({length: sequenceChunk.length}, () => 
+        Math.floor(Math.random() * 8)
+      ),
+      8
+    );
+    
+    // Entity recognition (10 categories)
+    const entityTarget = tf.oneHot(
+      Array.from({length: sequenceChunk.length}, () => 
+        Math.floor(Math.random() * 10)
+      ),
+      10
+    );
+    
+    console.log(`Training self-learning model on chunk ${i/selfLearningChunkSize + 1}/${Math.ceil(allSequences.length/selfLearningChunkSize)}`);
+    await selfLearningModel.fit(
+      inputTensor,
+      [responseTypeTarget, sentimentTarget, intentTarget, nextWordTarget, contextTarget, entityTarget],
+      {
+        epochs: 5,
+        batchSize: 8,
+        shuffle: true,
+        callbacks: {
+          onEpochEnd: (epoch, logs) => {
+            console.log(`Self-learning Model Epoch ${epoch + 1}: loss = ${logs.loss.toFixed(4)}`);
+          }
+        }
+      }
+    );
+    
+    // Cleanup tensors
+    inputTensor.dispose();
+    responseTypeTarget.dispose();
+    sentimentTarget.dispose();
+    intentTarget.dispose();
+    nextWordTarget.dispose();
+    contextTarget.dispose();
+    entityTarget.dispose();
+  }
+  
+  console.log('Saving self-learning model...');
+  await selfLearningModel.save('localstorage://self-learning-model');
   
   console.log('Training complete!');
 };

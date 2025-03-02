@@ -149,6 +149,101 @@
       "input": "How do I talk to doctors about sensitive topics?",
       "response": "Discussing sensitive topics: 1. Write down your concerns beforehand 2. Use our secure messaging for initial questions 3. Request private time during visits 4. Be honest - doctors are there to help 5. Consider starting with our online chat feature for practice.",
       "category": "teen_healthcare"
+    },
+    {
+      "input": "Can you explain what diabetes is?",
+      "response": "Diabetes is a chronic condition affecting how your body processes blood sugar (glucose). There are several types: Type 1 (body doesn't produce insulin), Type 2 (body doesn't use insulin properly), and gestational (during pregnancy). Symptoms include increased thirst, frequent urination, hunger, fatigue, and blurred vision. Management includes monitoring blood sugar, medication, healthy eating, and regular exercise. Always consult healthcare providers for personalized advice.",
+      "category": "medical_info"
+    },
+    {
+      "input": "What are the signs of a stroke?",
+      "response": "Remember the acronym FAST for stroke signs: Face drooping on one side, Arm weakness or numbness, Speech difficulty, and Time to call emergency services immediately. Other symptoms include sudden confusion, trouble seeing, dizziness, severe headache, and difficulty walking. Stroke is a medical emergency requiring immediate attention. Every minute counts for better outcomes.",
+      "category": "emergency"
+    },
+    {
+      "input": "How can I manage chronic pain?",
+      "response": "Chronic pain management is multifaceted: 1. Work with healthcare providers to identify causes 2. Follow prescribed medication regimens 3. Consider physical therapy and gentle exercise 4. Try complementary approaches like meditation or acupuncture 5. Join support groups 6. Practice stress reduction techniques. Our platform can help you track pain levels and communicate effectively with your healthcare team.",
+      "category": "medical_info"
+    },
+    {
+      "input": "What's the difference between a cold and the flu?",
+      "response": "Colds and flu share some symptoms but differ in severity and onset. Colds typically develop gradually with symptoms like runny/stuffy nose, sneezing, and mild fatigue. Flu comes on suddenly with fever, body aches, extreme fatigue, and respiratory symptoms. Flu is generally more severe and can lead to complications. Both are viral but caused by different viruses. Flu can be prevented with annual vaccines.",
+      "category": "medical_info"
+    },
+    {
+      "input": "How do I know if I need therapy?",
+      "response": "Consider therapy if: 1. You're experiencing persistent sadness, anxiety, or mood changes 2. Daily functioning is impaired 3. Relationships are suffering 4. You're using substances to cope 5. You've experienced trauma 6. You're having thoughts of harming yourself or others (seek immediate help). Therapy can be beneficial even without crisis. Our platform can connect you with mental health professionals securely and confidentially.",
+      "category": "mental_health"
+    },
+    {
+      "input": "What should I do about high cholesterol?",
+      "response": "Managing high cholesterol typically involves: 1. Dietary changes (reduce saturated fats, increase fiber) 2. Regular physical activity 3. Weight management 4. Limiting alcohol 5. Quitting smoking 6. Medication if prescribed by your doctor. Regular monitoring is important. Our platform can help you track cholesterol levels and communicate with your healthcare provider about management strategies.",
+      "category": "medical_info"
+    },
+    {
+      "input": "How can I prepare for surgery?",
+      "response": "Surgery preparation includes: 1. Follow all pre-operative instructions exactly 2. Disclose all medications and supplements 3. Arrange transportation and post-surgery care 4. Prepare your home for recovery 5. Follow fasting guidelines 6. Ask questions about the procedure and recovery. Our secure messaging system allows you to communicate with your surgical team before and after the procedure.",
+      "category": "medical_info"
+    },
+    {
+      "input": "What vaccinations do adults need?",
+      "response": "Adult vaccinations may include: 1. Annual flu shot 2. Td/Tdap (tetanus, diphtheria, pertussis) every 10 years 3. Shingles vaccine (50+ years) 4. Pneumococcal vaccines (65+ or certain conditions) 5. COVID-19 vaccines and boosters 6. Others based on age, health conditions, and risk factors. Our platform can help you track your immunization history and send reminders for needed vaccines.",
+      "category": "preventive_care"
+    },
+    {
+      "input": "How do I manage seasonal allergies?",
+      "response": "Seasonal allergy management includes: 1. Track pollen counts and limit outdoor exposure when high 2. Keep windows closed during high pollen seasons 3. Use air purifiers with HEPA filters 4. Shower after being outdoors 5. Try over-the-counter antihistamines, nasal sprays, or eye drops 6. Consider prescription options if OTC remedies aren't effective. Our platform can help you track symptoms and communicate with allergists.",
+      "category": "medical_info"
+    },
+    {
+      "input": "What are the warning signs of depression?",
+      "response": "Depression warning signs include: 1. Persistent sadness or empty mood 2. Loss of interest in activities once enjoyed 3. Sleep changes (insomnia or oversleeping) 4. Energy loss or increased fatigue 5. Appetite or weight changes 6. Difficulty concentrating 7. Feelings of worthlessness or guilt 8. Thoughts of death or suicide (seek immediate help). Our platform offers secure connections to mental health resources and professionals.",
+      "category": "mental_health"
+    },
+    {
+      "input": "How can I improve my heart health?",
+      "response": "Heart health improvements include: 1. Regular physical activity (aim for 150 minutes/week) 2. Heart-healthy diet (fruits, vegetables, whole grains, lean proteins) 3. Maintain healthy weight 4. Don't smoke or use tobacco 5. Limit alcohol consumption 6. Manage stress 7. Get quality sleep 8. Control blood pressure, cholesterol, and blood sugar. Our platform helps track these metrics and communicate with cardiologists securely.",
+      "category": "preventive_care"
+    },
+    {
+      "input": "What should I know about antibiotics?",
+      "response": "Important antibiotic information: 1. Only effective against bacterial infections, not viral ones 2. Always take the full course as prescribed 3. Take exactly as directed (with/without food) 4. Don't share antibiotics or save for later use 5. Inform your doctor of all allergies and medications 6. Some side effects are common (digestive issues). Antibiotic resistance is a serious concern caused by misuse. Our platform helps track medication schedules and side effects.",
+      "category": "medication"
+    },
+    {
+      "input": "How do I prepare for a telehealth appointment?",
+      "response": "Telehealth preparation: 1. Test your technology beforehand 2. Find a quiet, private, well-lit space 3. Have a list of symptoms, questions, and current medications ready 4. Keep a pen and paper for notes 5. Have any relevant medical devices ready (thermometer, blood pressure monitor) 6. Wear clothing that allows examination of relevant areas if needed. Our platform provides secure, HIPAA-compliant telehealth connections with your providers.",
+      "category": "appointment"
+    },
+    {
+      "input": "What are common medication side effects?",
+      "response": "Common medication side effects vary by drug class but may include: 1. Digestive issues (nausea, diarrhea, constipation) 2. Drowsiness or insomnia 3. Dizziness 4. Skin reactions 5. Dry mouth 6. Headache. Always report concerning or severe side effects to your healthcare provider immediately. Our medication tracking feature allows you to document side effects to discuss with your provider.",
+      "category": "medication"
+    },
+    {
+      "input": "How do I know if I'm having a heart attack?",
+      "response": "Heart attack warning signs include: 1. Chest discomfort (pressure, squeezing, fullness, or pain) 2. Discomfort in other upper body areas (arms, back, neck, jaw, stomach) 3. Shortness of breath 4. Cold sweat 5. Nausea 6. Lightheadedness. Women may experience less obvious symptoms. If you suspect a heart attack, call emergency services (911) immediately. Every minute matters for heart muscle survival.",
+      "category": "emergency"
+    },
+    {
+      "input": "What should I know about genetic testing?",
+      "response": "Genetic testing considerations: 1. Different types serve different purposes (carrier, diagnostic, predictive) 2. Results may affect family members 3. Insurance coverage varies 4. Privacy concerns exist 5. Results may be uncertain or change over time 6. Genetic counseling before and after testing is valuable. Our platform ensures secure storage of genetic information with strict privacy controls and connects you with genetic counselors.",
+      "category": "medical_info"
+    },
+    {
+      "input": "How can I manage diabetes effectively?",
+      "response": "Effective diabetes management includes: 1. Monitor blood glucose regularly 2. Take medications as prescribed 3. Follow a balanced diet with consistent carbohydrate intake 4. Exercise regularly 5. Attend all medical appointments 6. Check feet daily 7. Manage stress 8. Get recommended screenings for complications. Our platform helps track glucose readings, medication adherence, and facilitates secure communication with your diabetes care team.",
+      "category": "medical_info"
+    },
+    {
+      "input": "What are the stages of Alzheimer's disease?",
+      "response": "Alzheimer's typically progresses through stages: 1. Preclinical (changes begin but no symptoms) 2. Mild cognitive impairment (slight memory problems) 3. Mild dementia (memory loss, confusion, difficulty with daily tasks) 4. Moderate dementia (increased confusion, behavior changes, need for assistance) 5. Severe dementia (extensive care needs, loss of communication abilities). Our platform helps caregivers coordinate care and communicate with healthcare providers securely.",
+      "category": "medical_info"
+    },
+    {
+      "input": "How do I interpret my lab results?",
+      "response": "Lab result interpretation: 1. Note reference ranges (what's normal) 2. Look for values marked high/low 3. Consider trends over time rather than single readings 4. Remember that slightly abnormal values don't always indicate problems 5. Discuss results with your healthcare provider for proper context 6. Don't make treatment changes based solely on lab results without professional guidance. Our platform securely stores your lab history for tracking trends.",
+      "category": "medical_records"
     }
   ],
   "categories": [
@@ -170,6 +265,8 @@
     "teen_nutrition",
     "teen_fitness",
     "teen_healthcare",
-    "teen_privacy"
+    "teen_privacy",
+    "mental_health",
+    "preventive_care"
   ]
 }
