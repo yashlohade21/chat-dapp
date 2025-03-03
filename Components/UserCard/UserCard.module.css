@@ -1,35 +1,80 @@
 .UserCard{
-    background-color: rgba(0,0,0, 0.25);
-    border-radius: .5rem;
+    background-color: var(--card-bg-color);
+    border-radius: 12px;
     text-align: center;
-    padding: 1rem;
+    padding: 1.5rem;
     position: relative;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    transition: var(--transition-fast);
+    overflow: hidden;
+}
+
+.UserCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+    border-color: var(--primary-color);
 }
 
 .UserCard_box_img{
     border-radius: 50%;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: var(--transition-fast);
+}
+
+.UserCard:hover .UserCard_box_img {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(46, 125, 50, 0.2);
 }
 
 .UserCard_box_info{
-    line-height: .6;
+    line-height: 1.2;
+    margin-top: 1rem;
+}
+
+.UserCard_box_info h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.UserCard_box_info p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    font-family: monospace;
 }
 
 .UserCard_box_info button{
-    background-color: rgba(0,0,0, 0.25);
-    color: #F18303;
-    width: 50%;
-    padding: 1rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    width: 60%;
+    padding: 0.8rem;
     border: none;
-    border-radius: .5rem;
-    font-size: 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
+    transition: var(--transition-fast);
+    box-shadow: 0 2px 5px rgba(46, 125, 50, 0.2);
+}
+
+.UserCard_box_info button:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(46, 125, 50, 0.3);
 }
 
 .number{
     position: absolute;
     right: 1rem;
-    padding: 1rem 1.3rem;
+    padding: 0.75rem 1rem;
     border-radius: 50%;
-    background-color: #F18303;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
     top: 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }

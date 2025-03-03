@@ -114,6 +114,18 @@ IPFS is used for decentralized file storage:
 - Handle model initialization errors gracefully
 - Avoid reinitializing models during file processing
 
+## UI Design Guidelines for Healthcare Applications
+- Use white backgrounds for better readability and clean appearance
+- Use green (#2E7D32) for headings and primary actions to align with healthcare standards
+- Maintain high contrast between text (dark) and background (white) for accessibility
+- Use subtle shadows and borders to create visual hierarchy
+- Implement consistent spacing and padding across all components
+- Use rounded corners (8-12px radius) for a modern, approachable feel
+- Ensure all interactive elements have clear hover/focus states
+- Use green for success states and red for errors/warnings
+- Maintain consistent typography with clear hierarchy
+- Ensure all forms and inputs follow healthcare UI conventions
+
 ## Chatbot Training and Implementation
 
 ### Dataset Structure

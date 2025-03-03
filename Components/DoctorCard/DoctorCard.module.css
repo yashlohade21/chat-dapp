@@ -1,90 +1,116 @@
 .card {
-  background-color: #1f1f1f;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: var(--card-bg-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--card-shadow);
+  transition: var(--transition-fast);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
 }
 
 .card:hover,
 .card:focus {
   transform: translateY(-5px);
-  box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+  box-shadow: 0 12px 20px rgba(0,0,0,0.1);
   outline: none;
+  border-color: var(--primary-color);
 }
 
 .card:focus-visible {
-  outline: 2px solid #f18303;
+  outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
 
 .selected {
-  border: 2px solid #f18303;
+  border: 2px solid var(--primary-color);
 }
 
 .header {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .avatar {
   border-radius: 50%;
+  border: 2px solid var(--primary-color);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .info h3 {
   margin: 0;
   font-size: 1.2rem;
-  color: #f18303;
+  color: var(--primary-color);
+  font-weight: 600;
 }
 
 .verified {
-  font-size: 0.9rem;
-  color: #00ff00;
-  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--success-color);
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.25rem;
+  font-weight: 500;
 }
 
 .details p {
-  margin: 0.3rem 0;
-  color: #ddd;
+  margin: 0.5rem 0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.details p strong {
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .availability {
-  font-weight: bold;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+  display: inline-block;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
 }
 
 .availability.available {
-  color: #00ff00;
+  color: var(--success-color);
+  background-color: rgba(76, 175, 80, 0.1);
 }
 
 .availability.busy {
-  color: #ff4444;
+  color: var(--error-color);
+  background-color: rgba(244, 67, 54, 0.1);
 }
 
 .connectButton {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background-color: #f18303;
+  margin-top: 1.5rem;
+  padding: 0.8rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
   border: none;
-  color: #fff;
-  border-radius: 4px;
+  color: white;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s ease;
+  font-weight: 600;
+  transition: var(--transition-fast);
+  width: 100%;
+  box-shadow: 0 2px 5px rgba(46, 125, 50, 0.2);
 }
 
 .connectButton:hover:enabled {
-  background-color: #d97503;
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(46, 125, 50, 0.3);
 }
 
 .connectButton:disabled {
-  background-color: #666;
+  background-color: var(--text-tertiary);
   cursor: not-allowed;
 }
