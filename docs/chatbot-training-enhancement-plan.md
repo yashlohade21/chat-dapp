@@ -181,3 +181,6 @@ After training and integration, test the trained model by using sample queries t
 
 This plan outlines all key changes (data prep tuning, model architecture choices, training script updates, and AIService integration) necessary to train the chatbot for improved results. Implement these modifications step-by-step and then validate the improvements with testing.
 
+
+
+Secure smart Healtcare System
