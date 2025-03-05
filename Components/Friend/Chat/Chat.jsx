@@ -222,6 +222,15 @@ const Chat = ({ currentAccount, currentUser, currentFriend }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [showChatbotResponse, setShowChatbotResponse] = useState(false);
   const [chatbotResponse, setChatbotResponse] = useState('');
+  const [decrypting, setDecrypting] = useState(false);
+  const messagesEndRef = useRef(null);
+  const [autoScroll, setAutoScroll] = useState(false);
+
+  useEffect(() => {
+    if (autoScroll && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [friendMsg, autoScroll]);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -238,6 +247,10 @@ const Chat = ({ currentAccount, currentUser, currentFriend }) => {
       readUser(chatData.address);
     }
   }, [chatData.address, readMessage, readUser]);
+
+  const toggleAutoScroll = () => {
+    setAutoScroll(prev => !prev);
+  };
 
   const handleLanguageChange = useCallback((e) => {
     setSelectedLanguage(e.target.value);
@@ -679,6 +692,13 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
             <h4>{userName}</h4>
             <p className={Style.show}>{account}</p>
           </div>
+          <button 
+            onClick={toggleAutoScroll} 
+            className={`${Style.autoScrollToggle} ${autoScroll ? Style.autoScrollActive : ''}`}
+            title={autoScroll ? "Disable Auto-Scroll" : "Enable Auto-Scroll"}
+          >
+            {autoScroll ? "Auto-Scroll: ON" : "Auto-Scroll: OFF"}
+          </button>
         </div>
       ) : null}
 
@@ -764,6 +784,7 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                 <p>Start the conversation by sending a message or scheduling an appointment!</p>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
         </div>
       </div>
@@ -1015,13 +1036,13 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
         </div>
       )}
 
-    {notification && (
-      <Notification
-        type={notification.type}
-        message={notification.message}
-        onClose={() => setNotification(null)} // Clear the notification
-      />
-    )}
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)} // Clear the notification
+        />
+      )}
 
       <DecryptionKeyModal
         show={showKeyModal}

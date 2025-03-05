@@ -41,6 +41,11 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+a:hover {
+  color: var(--primary-color);
 }
 
 * {
@@ -56,10 +61,72 @@ h1, h2, h3, h4, h5, h6 {
 button {
   font-family: 'Inter', sans-serif;
   cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+button:focus {
+  outline: none;
 }
 
 input, textarea, select {
   font-family: 'Inter', sans-serif;
+  transition: var(--transition-normal);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+}
+
+/* Add smooth scrolling to the entire page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Improve focus styles for accessibility */
+:focus {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 2px;
+}
+
+/* Add subtle animations for interactive elements */
+button, a, input[type="submit"] {
+  position: relative;
+  overflow: hidden;
+}
+
+button:after, a:after, input[type="submit"]:after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%);
+  transform-origin: 50% 50%;
+}
+
+button:focus:not(:active):after, 
+a:focus:not(:active):after, 
+input[type="submit"]:focus:not(:active):after {
+  animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  20% {
+    transform: scale(25, 25);
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(40, 40);
+  }
 }
 
 @media (prefers-color-scheme: dark) {
