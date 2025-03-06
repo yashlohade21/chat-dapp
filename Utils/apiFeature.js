@@ -9,76 +9,47 @@ import {
 
 export const ChechIfWalletConnected = async () => {
   try {
-    if (!window.ethereum) {
-      console.log("Install MetaMask");
-      return null;
-    }
-    // Trigger network switching to ensure proper chainId format (e.g., 0x13882)
-    await handleNetworkSwitch();
-
+    if (!window.ethereum) return console.log("Install MateMask");
+    const network = await handleNetworkSwitch();
     const accounts = await window.ethereum.request({
       method: "eth_accounts",
     });
 
-    if (accounts.length === 0) {
-      console.log("No accounts found. Please connect your wallet.");
-      return null;
-    }
-    return accounts[0];
+    const firstAccount = accounts[0];
+    return firstAccount;
   } catch (error) {
-    console.error("Error checking wallet connection:", error);
-    return null;
+    console.log(error);
   }
 };
 
 export const connectWallet = async () => {
   try {
-    if (!window.ethereum) {
-      console.log("Please install MetaMask");
-      return "";
-    }
-    await handleNetworkSwitch();
+    if (!window.ethereum) return console.log("Install MetaMask");
+    const network = await handleNetworkSwitch();
     const accounts = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
-    if (!accounts || accounts.length === 0) {
-      throw new Error("No accounts found");
-    }
-    return accounts[0];
+    const firstAccount = accounts[0];
+    return firstAccount;
   } catch (error) {
-    console.error("Error connecting wallet:", error);
-    return "";
+    console.log(error);
   }
 };
 
 const fetchContract = (signerOrProvider) =>
   new ethers.Contract(ChatAppAddress, ChatAppABI, signerOrProvider);
 
-export const connectingWithContract = async (retries = 3) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      // Initialize Web3Modal with options
-      const web3Modal = new Web3Modal({
-        network: "polygon_amoy", // optional
-        cacheProvider: true, // optional
-        providerOptions: {} // required - empty for MetaMask only
-      });
-      
-      const connection = await web3Modal.connect();
-      const provider = new ethers.providers.Web3Provider(connection);
-      const signer = provider.getSigner();
-      const contract = fetchContract(signer);
-      await contract.deployed();
-      return contract;
-    } catch (error) {
-      console.error(`Contract connection attempt ${i + 1} failed:`, error);
-      if (i === retries - 1) throw error;
-      await new Promise(resolve =>
-        setTimeout(resolve, Math.pow(2, i) * 1000)
-      );
-    }
+export const connectingWithContract = async () => {
+  try {
+    const web3modal = new Web3Modal();
+    const connection = await web3modal.connect();
+    const provider = new ethers.providers.Web3Provider(connection);
+    const signer = provider.getSigner();
+    const contract = fetchContract(signer);
+    return contract;
+  } catch (error) {
+    console.log(error);
   }
-  throw new Error("Failed to connect to contract after multiple attempts");
 };
 
 export const converTime = (time) => {

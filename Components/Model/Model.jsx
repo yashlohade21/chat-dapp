@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import Image from "next/image";
 
-//INTERNAL IMPORT
+// INTERNAL IMPORT
 import Style from "./Model.module.css";
 import images from "../../assets";
 import { ChatAppContect } from "../../Context/ChatAppContext";
@@ -9,40 +9,29 @@ import { Loader } from "../../Components/index";
 
 const Model = ({ openBox, title, address, head, info, smallInfo, image, functionName }) => {
   const [name, setName] = useState("");
+  const [userAddress, setUserAddress] = useState(address);
   const [category, setCategory] = useState("0");
-  const { loading, connectWallet } = useContext(ChatAppContect);
+  const { loading, createAccount, connectWallet, account } = useContext(ChatAppContect);
 
-  const handleSubmit = async () => {
-    if (!name.trim()) {
-      alert("Please enter your name");
-      return;
-    }
-
-    if (!address) {
-      // Store form data temporarily
-      localStorage.setItem('pendingAccount', JSON.stringify({ name, category }));
-      // Close modal
-      openBox(false);
-      // Connect wallet
+  const handleCreateAccount = async () => {
+    if (!account) {
       await connectWallet();
       return;
     }
 
-    functionName({ 
-      name, 
-      category 
-    });
-  };
-
-  // Load pending account data if exists
-  useEffect(() => {
-    const pendingAccount = localStorage.getItem('pendingAccount');
-    if (pendingAccount) {
-      const { name: savedName, category: savedCategory } = JSON.parse(pendingAccount);
-      setName(savedName);
-      setCategory(savedCategory);
+    if (!name) {
+      console.error("Name cannot be empty");
+      return;
     }
-  }, []);
+
+    try {
+      await createAccount({ name, userAddress: account, category });
+      console.log("Account created successfully");
+      window.location.reload();
+    } catch (error) {
+      console.error("Error creating account:", error);
+    }
+  };
 
   return (
     <div className={Style.Model}>
@@ -64,7 +53,7 @@ const Model = ({ openBox, title, address, head, info, smallInfo, image, function
           <p>{info}</p>
           <small>{!address ? "Fill in your details and connect wallet to create account" : smallInfo}</small>
 
-          {loading === true ? (
+          {loading ? (
             <Loader />
           ) : (
             <div className={Style.Model_box_right_name}>
@@ -81,6 +70,17 @@ const Model = ({ openBox, title, address, head, info, smallInfo, image, function
                   onChange={(e) => setName(e.target.value)}
                   value={name}
                   required
+                />
+              </div>
+
+              <div className={Style.Model_box_right_name_info}>
+                <Image src={images.account} alt="user" width={30} height={30} />
+                <input
+                  type="text"
+                  placeholder={address || "Enter address.."}
+                  onChange={(e) => setUserAddress(e.target.value)}
+                  value={userAddress}
+                  disabled={!!address}
                 />
               </div>
               
@@ -109,13 +109,17 @@ const Model = ({ openBox, title, address, head, info, smallInfo, image, function
               )}
 
               <div className={Style.Model_box_right_name_btn}>
-                <button onClick={handleSubmit}>
-                  <Image src={images.send} alt="send" width={24} height={24} />
-                  {!address ? 'Continue & Connect Wallet' : 'Create Account'}
+                <button onClick={handleCreateAccount}>
+                  {""}
+                  <Image src={images.send} alt="send" width={30} height={30} />
+                  {""}
+                  Submit
                 </button>
 
                 <button onClick={() => openBox(false)}>
-                  <Image src={images.close} alt="close" width={24} height={24} />
+                  {""}
+                  <Image src={images.close} alt="send" width={30} height={30} />
+                  {""}
                   Cancel
                 </button>
               </div>
