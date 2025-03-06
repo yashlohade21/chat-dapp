@@ -86,27 +86,21 @@ export const ChatAppProvider = ({ children }) => {
   };
 
   //CREATE ACCOUNT
-  const createAccount = async ({ name, userAddress, category }) => {
+  const createAccount = async ({ name, category }) => {
     try {
-      if (!name) {
-        return setError("Name cannot be empty");
-      }
-
-      // If no account is connected yet, connect wallet first
-      if (!account) {
-        await connectWallet();
-        return setError("Please connect your wallet first and try again");
+      if (!name || !account) {
+        return setError("Name And Account Address cannot be empty");
       }
 
       const contract = await connectingWithContract();
-      const getCreatedUser = await contract.createAccount(name, category || "0");
+      const getCreatedUser = await contract.createAccount(name, category);
 
       setLoading(true);
       await getCreatedUser.wait();
       setLoading(false);
       
       // Store user type in localStorage for future reference
-      localStorage.setItem('userCategory', category || "0");
+      localStorage.setItem('userCategory', category);
       
       window.location.reload();
     } catch (error) {
@@ -128,22 +122,10 @@ export const ChatAppProvider = ({ children }) => {
       }
 
       // If not in localStorage, get from contract
-      try {
-        const userExists = await contract.checkUserExists(address);
-        if (!userExists) {
-          return null;
-        }
-        
-        // Get user info - this will depend on your contract implementation
-        // If your contract doesn't have a getUserInfo method, you might need to adapt this
-        const userName = await contract.getUsername(address);
-        if (userName) {
-          // For now, we'll return a default category if we can't determine it
-          // You may need to adjust this based on your contract's capabilities
-          return "0"; // Default to patient
-        }
-      } catch (error) {
-        console.error("Error getting user info:", error);
+      const user = await contract.getUserInfo(address);
+      if (user && user.category !== undefined) {
+        localStorage.setItem('userCategory', user.category.toString());
+        return user.category.toString();
       }
       
       return null;
