@@ -8,7 +8,7 @@ import images from "../assets";
 import Image from "next/image";
 
 const ChatApp = () => {
-  const { account, connectWallet } = useContext(ChatAppContect);
+  const { account, connectWallet } = useContext(ChatAppContect) || {};
 
   // If no account is connected, show a warning message
   if (!account) {

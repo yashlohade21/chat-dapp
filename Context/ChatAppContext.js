@@ -71,6 +71,31 @@ export const ChatAppProvider = ({ children }) => {
     fetchData();
   }, []);
 
+  //Logout function
+  const logout = () => {
+    // Clear all user-related state
+    setAccount("");
+    setUserName("");
+    setFriendLists([]);
+    setFriendMsg([]);
+    setUserLists([]);
+    setCurrentUserName("");
+    setCurrentUserAddress("");
+    
+    // Clear any stored user data in localStorage
+    localStorage.removeItem("walletConnected");
+    
+    // Redirect to home page
+    router.push("/");
+    
+    // Optional: Display a success message
+    setTimeout(() => {
+      setError(""); // Clear any existing errors
+    }, 100);
+    
+    console.log("User logged out successfully");
+  };
+
   //READ MESSAGE
   const readMessage = async (friendAddress) => {
     try {
@@ -470,7 +495,8 @@ export const ChatAppProvider = ({ children }) => {
         checkPatientSettings,
         savePatientData,
         loadPatientData,
-        patientDataLoading
+        patientDataLoading,
+        logout
       }}
     >
       {children}
@@ -479,3 +505,5 @@ export const ChatAppProvider = ({ children }) => {
 };
 
 export default ChatAppProvider;
+
+

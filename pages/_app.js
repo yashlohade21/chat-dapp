@@ -26,7 +26,7 @@ const MyApp = ({ Component, pageProps }) => {
 
 // Separate component to access context
 const ConditionalChatbot = () => {
-  const { account } = useContext(ChatAppContect);
+  const { account } = useContext(ChatAppContect) || {};
   
   // Only render the chatbot if the user is connected (account exists)
   if (!account) return null;

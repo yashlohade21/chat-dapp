@@ -37,7 +37,11 @@ const NavBar = () => {
   const [openModel, setOpenModel] = useState(false);
   const [openUserModel, setOpenUserModel] = useState(false);
 
-  const { account, userName, connectWallet, createAccount, error } = useContext(ChatAppContect);
+  const { account, userName, connectWallet, createAccount, error, logout } = useContext(ChatAppContect);
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <div className={Style.NavBar}>
@@ -84,18 +88,28 @@ const NavBar = () => {
                 </button>
               </>
             ) : (
-              <button 
-                className={Style.connectedWalletBtn}
-                onClick={() => setOpenUserModel(true)}
-              >
-                <Image
-                  src={userName ? images.accountName : images.create2}
-                  alt="Account image"
-                  width={20}
-                  height={20}
-                />
-                <small>{userName || account.slice(0, 6)}...</small>
-              </button>
+              <div className={Style.loggedInControls}>
+                <button 
+                  className={Style.connectedWalletBtn}
+                  onClick={() => setOpenUserModel(true)}
+                >
+                  <Image
+                    src={userName ? images.accountName : images.create2}
+                    alt="Account image"
+                    width={20}
+                    height={20}
+                  />
+                  <small>{userName || account.slice(0, 6)}...</small>
+                </button>
+                
+                <button 
+                  onClick={handleLogout}
+                  className={Style.logoutBtn}
+                >
+                  <Image src={images.close} alt="Logout" width={16} height={16} />
+                  Logout
+                </button>
+              </div>
             )}
           </div>
         </div>
