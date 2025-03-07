@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styles from "./HIPAACompliance.module.css";
 import DoctorCard from "../DoctorCard/DoctorCard";
+import AppointmentScheduler from "./AppointmentScheduler";
 
 const HealthcareProviderDirectory = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,6 +10,8 @@ const HealthcareProviderDirectory = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [selectedDoctorForAppointment, setSelectedDoctorForAppointment] = useState(null);
 
   const specialties = [
     'All Specialties',
@@ -152,16 +155,17 @@ const HealthcareProviderDirectory = () => {
   };
 
   const handleConnect = async (provider) => {
-    setIsConnecting(true);
-    try {
-      // Simulate connection process (replace with real logic)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      alert(`Connection request sent to ${provider.name}`);
-    } catch (error) {
-      alert('Failed to connect. Please try again.');
-    } finally {
-      setIsConnecting(false);
+    if (!provider.acceptingPatients) {
+      return;
     }
+    
+    setSelectedDoctorForAppointment(provider);
+    setShowAppointmentModal(true);
+  };
+
+  const handleAppointmentScheduled = (appointmentDetails) => {
+    console.log('Appointment scheduled:', appointmentDetails);
+    // Here you would typically save the appointment to your backend
   };
 
   // Filter providers based on search term and selected specialty
@@ -268,6 +272,18 @@ const HealthcareProviderDirectory = () => {
           >
             Clear Filters
           </button>
+        </div>
+      )}
+
+      {showAppointmentModal && selectedDoctorForAppointment && (
+        <div className={styles.modalOverlay} onClick={() => setShowAppointmentModal(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <AppointmentScheduler 
+              doctor={selectedDoctorForAppointment}
+              onClose={() => setShowAppointmentModal(false)}
+              onSchedule={handleAppointmentScheduled}
+            />
+          </div>
         </div>
       )}
     </div>

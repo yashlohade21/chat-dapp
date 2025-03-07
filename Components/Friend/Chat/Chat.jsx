@@ -190,7 +190,7 @@ const RecommendationsPanel = ({ recommendations, onClose }) => (
 
 const Chat = ({ currentAccount, currentUser, currentFriend }) => {
   const router = useRouter();
-  const { readMessage, readUser, sendMessage, friendMsg, loading, userName, account } = useContext(ChatAppContect);
+  const { readMessage, readUser, sendMessage, friendMsg, loading, userName, account } = useContext(ChatAppContect) || {};
   const [message, setMessage] = useState("");
   const [showTranslation, setShowTranslation] = useState(false);
   const [translatedMessage, setTranslatedMessage] = useState("");
@@ -343,16 +343,51 @@ const Chat = ({ currentAccount, currentUser, currentFriend }) => {
     }
 
     try {
-      const appointmentMsg = `🏥 *New Appointment Request*\n
+      setLocalLoading(true);
+      
+      const uploadedFileUrls = [];
+      
+      if (selectedFiles.length > 0) {
+        setUploadProgress(0);
+        const totalFiles = selectedFiles.length;
+        
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          const result = await IPFSService.uploadFile(file);
+          
+          if (result.success) {
+            uploadedFileUrls.push({
+              name: file.name,
+              url: result.url,
+              type: file.type
+            });
+          } else {
+            console.error(`Failed to upload file ${file.name}:`, result.error);
+          }
+          
+          setUploadProgress(((i + 1) / totalFiles) * 100);
+        }
+      }
+      
+      let appointmentMsg = `🏥 *New Appointment Request*\n
 📅 Date: ${appointmentData.date}
 ⏰ Time: ${appointmentData.time}
 📝 Reason: ${appointmentData.reason}
 ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
 🚨 Urgency: ${appointmentData.urgency.toUpperCase()}`;
+
+      if (uploadedFileUrls.length > 0) {
+        appointmentMsg += '\n\n📎 Attached Files:';
+        
+        for (const file of uploadedFileUrls) {
+          appointmentMsg += `\n- [${file.name}](${file.url})`;
+          appointmentMsg += `\n  [FILE]${file.name}|${file.url}`;
+        }
+      }
       
       await sendMessage({
         msg: appointmentMsg,
-        address: currentUserAddress,
+        address: chatData.address,
       });
 
       setShowAppointmentForm(false);
@@ -368,6 +403,8 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
     } catch (error) {
       console.error("Error sending appointment request:", error);
       alert("Failed to send appointment request. Please try again.");
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -638,45 +675,6 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
     );
   };
 
-  const RecommendationsPanel = ({ recommendations, onClose }) => (
-    <div className={Style.side_panel}>
-      <div className={Style.panel_header}>
-        <h3>Smart Suggestions</h3>
-        <button onClick={onClose} className={Style.panel_close}>×</button>
-      </div>
-      <div className={Style.panel_content}>
-        {recommendations.map((rec, index) => (
-          <div key={index} className={Style.recommendation_item}>
-            <p>{rec}</p>
-            <div className={Style.recommendation_actions}>
-              <button className={Style.action_btn}>Use</button>
-              <button className={Style.action_btn}>Modify</button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const ChatbotPanel = ({ response, onClose }) => (
-    <div className={Style.side_panel}>
-      <div className={Style.panel_header}>
-        <h3>AI Assistant</h3>
-        <button onClick={onClose} className={Style.panel_close}>×</button>
-      </div>
-      <div className={Style.panel_content}>
-        <div className={Style.chatbot_response}>
-          {response}
-        </div>
-        <div className={Style.chatbot_suggestions}>
-          <button className={Style.suggestion_btn}>Tell me more</button>
-          <button className={Style.suggestion_btn}>Give an example</button>
-          <button className={Style.suggestion_btn}>Explain differently</button>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className={Style.Chat}>
       {userName && account ? (
@@ -701,13 +699,11 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
           </button>
         </div>
       ) : null}
-
-      <div className={Style.Chat_box_box}
-        ref={setChatBoxRef}
-      >
+  
+      <div className={Style.Chat_box_box} ref={setChatBoxRef}>
         <div className={Style.Chat_box}>
           <div className={Style.Chat_box_left}>
-            {friendMsg.length > 0 ? (
+            {friendMsg && friendMsg.length > 0 ? (
               friendMsg.map((el, i) => (
                 <div key={i}>
                   <div className={Style.Chat_box_left_title}>
@@ -788,7 +784,7 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
           </div>
         </div>
       </div>
-
+  
       {userName && account && (
         <div className={Style.Chat_box_send}>
           <div className={Style.Chat_box_send_wrapper}>
@@ -830,7 +826,7 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                   💡
                 </button>
               </div>
-
+  
               <input
                 type="text"
                 placeholder="Type your message..."
@@ -845,7 +841,7 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                 disabled={localLoading || loading}
                 className={`${Style.message_input} ${localLoading || loading ? Style.input_disabled : ''}`}
               />
-
+  
               {message.length > 0 && sentiment && (
                 <div className={Style.sentiment_indicator}>
                   {sentiment === 'positive' && '😊'}
@@ -854,7 +850,7 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                   <span className={Style.sentiment_text}>{sentiment}</span>
                 </div>
               )}
-
+  
               <div className={Style.send_actions}>
                 <div className={Style.file_upload}>
                   <input
@@ -895,21 +891,21 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                 )}
               </div>
             </div>
-
+  
             {showRecommendations && (
               <RecommendationsPanel
                 recommendations={recommendations}
                 onClose={() => setShowRecommendations(false)}
               />
             )}
-
+  
             {showChatbotResponse && (
               <ChatbotPanel
                 response={chatbotResponse}
                 onClose={() => setShowChatbotResponse(false)}
               />
             )}
-
+  
             {showTranslation && (
               <div className={Style.translation_side_panel}>
                 <div className={Style.translation_container}>
@@ -929,10 +925,10 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                       onClick={() => setShowMetrics(!showMetrics)}
                       className={Style.metrics_toggle}
                     >
-                      {showMetrics ? '📊 Hide Metrics' : '📊 Show Metrics'}
+                      {showMetrics ? '��� Hide Metrics' : '📊 Show Metrics'}
                     </button>
                   </div>
-
+  
                   <div className={Style.translation_content}>
                     <div className={Style.translation_text}>
                       {translatedMessage}
@@ -944,7 +940,7 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                       </div>
                     )}
                   </div>
-
+  
                   {showMetrics && historicalMetrics?.length > 0 && (
                     <MetricsChart data={historicalMetrics} />
                   )}
@@ -954,101 +950,276 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
           </div>
         </div>
       )}
-
+  
       {showAppointmentForm && (
         <div className={Style.modal_overlay}>
           <div className={Style.modal_content}>
-            <h3>📅 Schedule Appointment</h3>
-            <form onSubmit={handleAppointmentSubmit} className={Style.appointment_form}>
-              <div className={Style.form_group}>
-                <label>Date*</label>
-                <input
-                  type="date"
-                  value={appointmentData.date}
-                  onChange={(e) => setAppointmentData({...appointmentData, date: e.target.value})}
-                  min={new Date().toISOString().split('T')[0]}
-                  required
-                />
-              </div>
-              
-              <div className={Style.form_group}>
-                <label>Time*</label>
-                <input
-                  type="time"
-                  value={appointmentData.time}
-                  onChange={(e) => setAppointmentData({...appointmentData, time: e.target.value})}
-                  required
-                />
-              </div>
-              
-              <div className={Style.form_group}>
-                <label>Reason for Visit*</label>
-                <input
-                  type="text"
-                  value={appointmentData.reason}
-                  onChange={(e) => setAppointmentData({...appointmentData, reason: e.target.value})}
-                  placeholder="Brief reason for appointment"
-                  required
-                />
-              </div>
-              
-              <div className={Style.form_group}>
-                <label>Symptoms</label>
-                <textarea
-                  value={appointmentData.symptoms}
-                  onChange={(e) => setAppointmentData({...appointmentData, symptoms: e.target.value})}
-                  placeholder="Describe your symptoms in detail..."
-                  rows="3"
-                />
-              </div>
-              
-              <div className={Style.form_group}>
-                <label>Urgency Level</label>
-                <select
-                  value={appointmentData.urgency}
-                  onChange={(e) => setAppointmentData({...appointmentData, urgency: e.target.value})}
-                  className={Style[`urgency_${appointmentData.urgency}`]}
-                >
-                  <option value="low">🟢 Low - Regular checkup</option>
-                  <option value="normal">🟡 Normal - Minor health issue</option>
-                  <option value="high">🔴 High - Urgent care needed</option>
-                </select>
-              </div>
-
-              <div className={Style.form_buttons}>
-                <button type="submit" className={Style.submit_btn}>
-                  Schedule Appointment
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    setShowAppointmentForm(false);
-                    setSelectedFiles([]);
-                    setUploadProgress(0);
-                  }}
-                  className={Style.cancel_btn}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+            <div className={Style.appointment_header}>
+              <h3>Schedule Appointment</h3>
+              <button 
+                className={Style.close_modal_btn} 
+                onClick={() => setShowAppointmentForm(false)}
+                aria-label="Close appointment form"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            
+            <div className={Style.appointment_scroll_container}>
+              <form onSubmit={handleAppointmentSubmit} className={Style.appointment_form}>
+                <div className={Style.appointment_section}>
+                  <h4 className={Style.section_title}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    Date & Time
+                  </h4>
+                  
+                  <div className={Style.form_row}>
+                    <div className={Style.form_group}>
+                      <label>
+                        Date<span className={Style.required}>*</span>
+                      </label>
+                      <div className={Style.date_input_wrapper}>
+                        <input
+                          type="date"
+                          value={appointmentData.date}
+                          onChange={(e) => setAppointmentData({...appointmentData, date: e.target.value})}
+                          min={new Date().toISOString().split('T')[0]}
+                          required
+                          className={Style.date_input}
+                        />
+                        <svg className={Style.date_icon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    <div className={Style.form_group}>
+                      <label>
+                        Time<span className={Style.required}>*</span>
+                      </label>
+                      <div className={Style.time_input_wrapper}>
+                        <input
+                          type="time"
+                          value={appointmentData.time}
+                          onChange={(e) => setAppointmentData({...appointmentData, time: e.target.value})}
+                          required
+                          className={Style.time_input}
+                        />
+                        <svg className={Style.time_icon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className={Style.appointment_section}>
+                  <h4 className={Style.section_title}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                      <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Appointment Details
+                  </h4>
+                  
+                  <div className={Style.form_group}>
+                    <label>
+                      Reason for Visit<span className={Style.required}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={appointmentData.reason}
+                      onChange={(e) => setAppointmentData({...appointmentData, reason: e.target.value})}
+                      placeholder="Brief reason for appointment"
+                      required
+                      className={Style.text_input}
+                    />
+                  </div>
+                  
+                  <div className={Style.form_group}>
+                    <label>Symptoms</label>
+                    <textarea
+                      value={appointmentData.symptoms}
+                      onChange={(e) => setAppointmentData({...appointmentData, symptoms: e.target.value})}
+                      placeholder="Describe your symptoms in detail..."
+                      rows="3"
+                      className={Style.textarea_input}
+                    />
+                  </div>
+                </div>
+                
+                <div className={Style.appointment_section}>
+                  <h4 className={Style.section_title}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    Priority
+                  </h4>
+                  
+                  <div className={Style.urgency_options}>
+                    <label className={`${Style.urgency_option} ${appointmentData.urgency === "low" ? Style.selected : ""}`}>
+                      <input
+                        type="radio"
+                        name="urgency"
+                        value="low"
+                        checked={appointmentData.urgency === "low"}
+                        onChange={() => setAppointmentData({...appointmentData, urgency: "low"})}
+                      />
+                      <div className={Style.urgency_content}>
+                        <div className={`${Style.urgency_indicator} ${Style.low}`}></div>
+                        <div className={Style.urgency_text}>
+                          <span>Low Priority</span>
+                          <small>Regular check-up</small>
+                        </div>
+                      </div>
+                    </label>
+                    
+                    <label className={`${Style.urgency_option} ${appointmentData.urgency === "normal" ? Style.selected : ""}`}>
+                      <input
+                        type="radio"
+                        name="urgency"
+                        value="normal"
+                        checked={appointmentData.urgency === "normal"}
+                        onChange={() => setAppointmentData({...appointmentData, urgency: "normal"})}
+                      />
+                      <div className={Style.urgency_content}>
+                        <div className={`${Style.urgency_indicator} ${Style.normal}`}></div>
+                        <div className={Style.urgency_text}>
+                          <span>Normal Priority</span>
+                          <small>Minor health issue</small>
+                        </div>
+                      </div>
+                    </label>
+                    
+                    <label className={`${Style.urgency_option} ${appointmentData.urgency === "high" ? Style.selected : ""}`}>
+                      <input
+                        type="radio"
+                        name="urgency"
+                        value="high"
+                        checked={appointmentData.urgency === "high"}
+                        onChange={() => setAppointmentData({...appointmentData, urgency: "high"})}
+                      />
+                      <div className={Style.urgency_content}>
+                        <div className={`${Style.urgency_indicator} ${Style.high}`}></div>
+                        <div className={Style.urgency_text}>
+                          <span>High Priority</span>
+                          <small>Urgent care needed</small>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                
+                {selectedFiles.length > 0 && (
+                  <div className={Style.appointment_section}>
+                    <h4 className={Style.section_title}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                        <polyline points="13 2 13 9 20 9"></polyline>
+                      </svg>
+                      Attached Files
+                    </h4>
+                    
+                    <div className={Style.selected_files_list}>
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className={Style.selected_file_item}>
+                          <div className={Style.file_icon}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                              <polyline points="13 2 13 9 20 9"></polyline>
+                            </svg>
+                          </div>
+                          <div className={Style.file_details}>
+                            <span className={Style.file_name}>{file.name}</span>
+                            <span className={Style.file_size}>{(file.size / 1024).toFixed(1)} KB</span>
+                          </div>
+                          <button 
+                            type="button" 
+                            className={Style.remove_file_btn}
+                            onClick={() => removeFile(index)}
+                            aria-label="Remove file"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className={Style.form_actions}>
+                  <div className={Style.file_upload_wrapper}>
+                    <input
+                      type="file"
+                      id="appointment_files"
+                      className={Style.file_input}
+                      onChange={handleFileSelect}
+                      multiple
+                    />
+                    <label htmlFor="appointment_files" className={Style.file_upload_btn}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                      </svg>
+                      Attach Files
+                    </label>
+                  </div>
+                  
+                  <div className={Style.submit_actions}>
+                    <button 
+                      type="button" 
+                      className={Style.cancel_btn}
+                      onClick={() => setShowAppointmentForm(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className={Style.submit_btn}
+                      disabled={!appointmentData.date || !appointmentData.time || !appointmentData.reason}
+                    >
+                      {localLoading ? (
+                        <>
+                          <span className={Style.spinner}></span>
+                          Scheduling...
+                        </>
+                      ) : (
+                        <>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                          </svg>
+                          Schedule Appointment
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
-
-      {notification && (
-        <Notification
-          type={notification.type}
-          message={notification.message}
-          onClose={() => setNotification(null)} // Clear the notification
-        />
-      )}
-
-      <DecryptionKeyModal
-        show={showKeyModal}
-        onClose={() => setShowKeyModal(false)}
-        decryptionKey={currentDecryptionKey}
-      />
     </div>
   );
 };
