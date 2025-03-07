@@ -35,6 +35,7 @@ const NavBar = () => {
   const [active, setActive] = useState(2);
   const [open, setOpen] = useState(false);
   const [openModel, setOpenModel] = useState(false);
+  const [openUserModel, setOpenUserModel] = useState(false);
 
   const { account, userName, connectWallet, createAccount, error } = useContext(ChatAppContect);
 
@@ -83,7 +84,10 @@ const NavBar = () => {
                 </button>
               </>
             ) : (
-              <button className={Style.connectedWalletBtn}>
+              <button 
+                className={Style.connectedWalletBtn}
+                onClick={() => setOpenUserModel(true)}
+              >
                 <Image
                   src={userName ? images.accountName : images.create2}
                   alt="Account image"
@@ -111,7 +115,104 @@ const NavBar = () => {
           />
         </div>
       )}
+
+      {openUserModel && (
+        <div className={Style.modelBox}>
+          <UserAccountModel 
+            openBox={setOpenUserModel}
+            account={account}
+            createAccount={createAccount}
+          />
+        </div>
+      )}
+
       {error == "" ? "" : <Error error={error} />}
+    </div>
+  );
+};
+
+const UserAccountModel = ({ openBox, account, createAccount }) => {
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      setError("Please enter your name");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await createAccount({ name });
+      openBox(false);
+    } catch (error) {
+      console.error("Error creating account:", error);
+      setError(error.message || "Failed to create account");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={Style.userAccountModel}>
+      <div className={Style.userAccountModel_box}>
+        <div className={Style.userAccountModel_box_header}>
+          <h2>Create Your Account</h2>
+          <button onClick={() => openBox(false)} className={Style.closeButton}>
+            <Image src={images.close} alt="Close" width={20} height={20} />
+          </button>
+        </div>
+
+        {error && <div className={Style.errorMessage}>{error}</div>}
+
+        <div className={Style.userAccountModel_box_form}>
+          <div className={Style.formGroup}>
+            <label>Your Name</label>
+            <div className={Style.inputWithIcon}>
+              <Image src={images.username} alt="User" width={20} height={20} />
+              <input
+                type="text"
+                placeholder="Enter your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className={Style.formGroup}>
+            <label>MetaMask Address</label>
+            <div className={Style.walletAddress}>
+              {account}
+            </div>
+          </div>
+
+          <div className={Style.buttonGroup}>
+            <button 
+              onClick={handleSubmit}
+              className={Style.submitButton}
+              disabled={loading}
+            >
+              {loading ? (
+                <div className={Style.buttonLoader}></div>
+              ) : (
+                <>
+                  <Image src={images.create2} alt="Create" width={20} height={20} />
+                  Create Account
+                </>
+              )}
+            </button>
+            <button 
+              onClick={() => openBox(false)}
+              className={Style.cancelButton}
+              disabled={loading}
+            >
+              <Image src={images.close} alt="Cancel" width={20} height={20} />
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

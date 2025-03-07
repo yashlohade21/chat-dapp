@@ -5,7 +5,6 @@ contract ChatApp {
     // User struct to store user information
     struct User {
         string name;
-        string accountType; // "0" for Patient, "1" for Doctor
         Friend[] friendList;
         bool exists;
     }
@@ -41,20 +40,14 @@ contract ChatApp {
     mapping(address => PatientData) private patientData;
 
     // Events
-    event UserCreated(address indexed user, string name, string accountType);
+    event UserCreated(address indexed user, string name);
     event FriendAdded(address indexed user, address indexed friend);
     event MessageSent(bytes32 indexed messageId, address indexed sender, address indexed receiver);
     event PatientDataUpdated(address indexed patient, string dataCID, uint256 timestamp);
 
     // Modifiers
     modifier userExists(address user) {
-        require(users[user].exists, "User does not exist");
-        _;
-    }
-
-    modifier onlyPatient() {
-        require(users[msg.sender].exists, "User does not exist");
-        require(keccak256(bytes(users[msg.sender].accountType)) == keccak256(bytes("0")), "Not a patient");
+        require(users[user].exists, "User is not registered");
         _;
     }
 
@@ -78,16 +71,15 @@ contract ChatApp {
     }
 
     // Create a new user account
-    function createAccount(string calldata name, string calldata accountType) external {
+    function createAccount(string calldata name) external {
         require(!users[msg.sender].exists, "User already exists");
         require(bytes(name).length > 0, "Username cannot be empty");
 
         User storage newUser = users[msg.sender];
         newUser.name = name;
-        newUser.accountType = accountType;
         newUser.exists = true;
 
-        emit UserCreated(msg.sender, name, accountType);
+        emit UserCreated(msg.sender, name);
     }
 
     // Add a friend
@@ -164,7 +156,7 @@ contract ChatApp {
     }
 
     // Update patient data with version tracking
-    function updatePatientData(string memory encryptedDataCID) external onlyPatient {
+    function updatePatientData(string memory encryptedDataCID) external userExists(msg.sender) {
         PatientData storage data = patientData[msg.sender];
         data.encryptedDataCID = encryptedDataCID;
         data.lastUpdated = block.timestamp;

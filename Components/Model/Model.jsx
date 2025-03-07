@@ -9,8 +9,43 @@ import { Loader } from "../../Components/index";
 
 const Model = ({ openBox, title, address, head, info, smallInfo, image, functionName }) => {
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("0");
-  const { loading, connectWallet } = useContext(ChatAppContect);
+  const { loading, connectWallet, createAccount } = useContext(ChatAppContect);
+  const [processingAccount, setProcessingAccount] = useState(false);
+
+  // Load pending account data if exists
+  useEffect(() => {
+    const pendingAccount = localStorage.getItem('pendingAccount');
+    if (pendingAccount) {
+      const { name: savedName } = JSON.parse(pendingAccount);
+      setName(savedName);
+    }
+  }, []);
+
+  // Check if we need to create an account after wallet connection
+  useEffect(() => {
+    const createPendingAccount = async () => {
+      const pendingAccount = localStorage.getItem('pendingAccount');
+      
+      if (pendingAccount && address && !processingAccount) {
+        try {
+          setProcessingAccount(true);
+          const { name: savedName } = JSON.parse(pendingAccount);
+          
+          // Create the account with the saved name
+          await createAccount({ name: savedName });
+          
+          // Clear the pending account data
+          localStorage.removeItem('pendingAccount');
+        } catch (error) {
+          console.error("Error creating account after wallet connection:", error);
+        } finally {
+          setProcessingAccount(false);
+        }
+      }
+    };
+
+    createPendingAccount();
+  }, [address, createAccount, processingAccount]);
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -18,31 +53,27 @@ const Model = ({ openBox, title, address, head, info, smallInfo, image, function
       return;
     }
 
+    // If wallet is not connected, store the name and connect wallet
     if (!address) {
       // Store form data temporarily
-      localStorage.setItem('pendingAccount', JSON.stringify({ name, category }));
+      localStorage.setItem('pendingAccount', JSON.stringify({ name }));
+      
       // Close modal
       openBox(false);
-      // Connect wallet
-      await connectWallet();
-      return;
+      
+      // Connect to MetaMask
+      try {
+        await connectWallet();
+        // The account creation will be handled by the useEffect above
+      } catch (error) {
+        console.error("Error connecting wallet:", error);
+        alert("Failed to connect wallet. Please try again.");
+      }
+    } else {
+      // If wallet is already connected, create account directly
+      await functionName({ name });
     }
-
-    functionName({ 
-      name, 
-      category 
-    });
   };
-
-  // Load pending account data if exists
-  useEffect(() => {
-    const pendingAccount = localStorage.getItem('pendingAccount');
-    if (pendingAccount) {
-      const { name: savedName, category: savedCategory } = JSON.parse(pendingAccount);
-      setName(savedName);
-      setCategory(savedCategory);
-    }
-  }, []);
 
   return (
     <div className={Style.Model}>
@@ -64,8 +95,11 @@ const Model = ({ openBox, title, address, head, info, smallInfo, image, function
           <p>{info}</p>
           <small>{!address ? "Fill in your details and connect wallet to create account" : smallInfo}</small>
 
-          {loading === true ? (
-            <Loader />
+          {loading || processingAccount ? (
+            <div className={Style.loaderContainer}>
+              <Loader />
+              <p>{processingAccount ? "Creating your account..." : "Connecting to wallet..."}</p>
+            </div>
           ) : (
             <div className={Style.Model_box_right_name}>
               <div className={Style.Model_box_right_name_info}>
@@ -83,38 +117,34 @@ const Model = ({ openBox, title, address, head, info, smallInfo, image, function
                   required
                 />
               </div>
-              
-              <div className={Style.Model_box_right_name_info}>
-                <Image 
-                  src={images.account} 
-                  alt="category" 
-                  width={24} 
-                  height={24} 
-                />
-                <select 
-                  onChange={(e) => setCategory(e.target.value)} 
-                  value={category}
-                  className={Style.Model_box_right_name_select}
-                  required
-                >
-                  <option value="0">Patient</option>
-                  <option value="1">Doctor</option>
-                </select>
-              </div>
+
+              {address && (
+                <div className={Style.Model_box_right_name_info}>
+                  <Image
+                    src={images.account}
+                    alt="wallet"
+                    width={24}
+                    height={24}
+                  />
+                  <div className={Style.walletAddress}>
+                    {address.slice(0, 6)}...{address.slice(-4)}
+                  </div>
+                </div>
+              )}
 
               {!address && (
                 <p className={Style.Model_box_right_name_info}>
-                  👉 After filling details, click continue to connect wallet
+                  👉 After filling details, click continue to connect MetaMask
                 </p>
               )}
 
               <div className={Style.Model_box_right_name_btn}>
-                <button onClick={handleSubmit}>
+                <button onClick={handleSubmit} disabled={loading || processingAccount}>
                   <Image src={images.send} alt="send" width={24} height={24} />
-                  {!address ? 'Continue & Connect Wallet' : 'Create Account'}
+                  {!address ? 'Connect MetaMask & Create Account' : 'Create Account'}
                 </button>
 
-                <button onClick={() => openBox(false)}>
+                <button onClick={() => openBox(false)} disabled={loading || processingAccount}>
                   <Image src={images.close} alt="close" width={24} height={24} />
                   Cancel
                 </button>

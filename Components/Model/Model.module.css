@@ -171,3 +171,26 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.loaderContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.loaderContainer p {
+  margin-top: 1rem;
+  color: #2E7D32;
+  font-weight: 500;
+}
+
+.walletAddress {
+  background-color: #f0f0f0;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-family: monospace;
+  font-weight: 600;
+  color: #333;
+}

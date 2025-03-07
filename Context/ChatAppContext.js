@@ -86,52 +86,58 @@ export const ChatAppProvider = ({ children }) => {
   };
 
   //CREATE ACCOUNT
-  const createAccount = async ({ name, category }) => {
+  const createAccount = async ({ name }) => {
     try {
-      if (!name || !account) {
-        return setError("Name And Account Address cannot be empty");
+      setError("");
+      if (!name || !name.trim()) {
+        return setError("Name cannot be empty");
       }
 
-      const contract = await connectingWithContract();
-      const getCreatedUser = await contract.createAccount(name, category);
+      if (!account) {
+        const walletAddress = await connectWallet();
+        if (!walletAddress) {
+          return setError("Please connect your wallet to create an account");
+        }
+        setAccount(walletAddress);
+      }
 
       setLoading(true);
-      await getCreatedUser.wait();
-      setLoading(false);
+      const contract = await connectingWithContract();
       
-      // Store user type in localStorage for future reference
-      localStorage.setItem('userCategory', category);
+      // Check if user already exists
+      const userExists = await contract.checkUserExists(account);
+      if (userExists) {
+        setLoading(false);
+        return setError("Account already exists for this wallet address");
+      }
       
+      console.log("Creating account with name:", name);
+      const getCreatedUser = await contract.createAccount(name);
+
+      // Wait for transaction to be mined
+      const receipt = await getCreatedUser.wait();
+      console.log("Account created successfully:", receipt);
+      
+      // Update the username state
+      setUserName(name);
+      
+      // Refresh the page to update UI
       window.location.reload();
     } catch (error) {
       console.error("Error creating account:", error);
-      setError("Error while creating your account. Please reload browser");
-    }
-  };
-
-  // Add function to check user category
-  const getUserCategory = async (address) => {
-    try {
-      const contract = await connectingWithContract();
-      if (!contract) return null;
+      let errorMessage = "Error creating your account";
       
-      // First try to get from localStorage for quick access
-      const storedCategory = localStorage.getItem('userCategory');
-      if (storedCategory !== null) {
-        return storedCategory;
-      }
-
-      // If not in localStorage, get from contract
-      const user = await contract.getUserInfo(address);
-      if (user && user.category !== undefined) {
-        localStorage.setItem('userCategory', user.category.toString());
-        return user.category.toString();
+      if (error.code === 4001) {
+        errorMessage = "Transaction rejected. Please approve the transaction to create your account.";
+      } else if (error.message && error.message.includes("User already exists")) {
+        errorMessage = "You already have an account with this wallet address";
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
-      return null;
-    } catch (error) {
-      console.error("Error getting user category:", error);
-      return null;
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -238,6 +244,7 @@ export const ChatAppProvider = ({ children }) => {
     setCurrentUserName(userName);
     setCurrentUserAddress(userAddress);
   };
+
   // Add doctor-related state
   const [doctors, setDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
@@ -443,7 +450,6 @@ export const ChatAppProvider = ({ children }) => {
       value={{
         readMessage,
         createAccount,
-        getUserCategory,
         addFriends,
         sendMessage,
         readUser,

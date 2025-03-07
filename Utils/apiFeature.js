@@ -34,19 +34,37 @@ export const ChechIfWalletConnected = async () => {
 export const connectWallet = async () => {
   try {
     if (!window.ethereum) {
-      console.log("Please install MetaMask");
+      alert("Please install MetaMask to use this application");
       return "";
     }
-    await handleNetworkSwitch();
+    
+    // First ensure we're on the correct network
+    try {
+      await handleNetworkSwitch();
+    } catch (switchError) {
+      console.error("Network switch failed:", switchError);
+      // Continue anyway, as the user might have rejected the network switch
+    }
+    
+    // Request account access
     const accounts = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
+    
     if (!accounts || accounts.length === 0) {
-      throw new Error("No accounts found");
+      throw new Error("No accounts found or user rejected the connection");
     }
+    
+    console.log("Wallet connected:", accounts[0]);
     return accounts[0];
   } catch (error) {
     console.error("Error connecting wallet:", error);
+    if (error.code === 4001) {
+      // User rejected the request
+      alert("You rejected the connection request. Please connect your wallet to continue.");
+    } else {
+      alert("Error connecting to wallet: " + (error.message || "Unknown error"));
+    }
     return "";
   }
 };
