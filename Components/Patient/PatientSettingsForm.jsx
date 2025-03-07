@@ -3,7 +3,6 @@ import styles from './PatientSettingsForm.module.css';
 import MedicalFileUpload from '../HIPAA/MedicalFileUpload';
 import { connectingWithContract } from '../../Utils/apiFeature';
 import { ChatAppContect } from '../../Context/ChatAppContext';
-import { decryptFileWithPassphrase } from '../../Utils/CryptoService';
 import { IPFSService } from '../../Utils/IPFSService';
 
 const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initialFormData = null }) => {
@@ -13,9 +12,9 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [selectedDoc, setSelectedDoc] = useState(null);
-  const [decryptionKey, setDecryptionKey] = useState('');
-  const [decryptedContent, setDecryptedContent] = useState(null);
-  const [decrypting, setDecrypting] = useState(false);
+  const [hashKey, setHashKey] = useState('');
+  const [viewContent, setViewContent] = useState(null);
+  const [viewing, setViewing] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -26,8 +25,8 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
         if (result && result.data) {
           setUploadedDocs(result.data.documents || []);
         }
-        const secureStorage = JSON.parse(localStorage.getItem('secureFileStorage') || '{}');
-        const userDocs = Object.values(secureStorage).filter(doc => doc.owner === account);
+        const fileStorage = JSON.parse(localStorage.getItem('fileStorage') || '{}');
+        const userDocs = Object.values(fileStorage).filter(doc => doc.owner === account);
         setUploadedDocs(userDocs);
       } catch (error) {
         console.error('Error loading patient data:', error);
@@ -51,15 +50,15 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
     try {
       setLoading(true);
       // Update local document storage if needed
-      const secureStorage = JSON.parse(localStorage.getItem('secureFileStorage') || '{}');
+      const fileStorage = JSON.parse(localStorage.getItem('fileStorage') || '{}');
       uploadedDocs.forEach(doc => {
-        secureStorage[doc.cid] = {
+        fileStorage[doc.cid] = {
           ...doc,
           timestamp: Date.now(),
           owner: account
         };
       });
-      localStorage.setItem('secureFileStorage', JSON.stringify(secureStorage));
+      localStorage.setItem('fileStorage', JSON.stringify(fileStorage));
 
       // Optionally update document CIDs on-chain if your contract supports it
       const contract = await connectingWithContract();
@@ -88,54 +87,44 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
 
   const handleDocumentClick = (doc) => {
     setSelectedDoc(doc);
-    setDecryptedContent(null);
-    setDecryptionKey('');
+    setViewContent(null);
+    setHashKey('');
   };
 
   const closeDocumentPreview = () => {
     setSelectedDoc(null);
-    setDecryptedContent(null);
-    setDecryptionKey('');
+    setViewContent(null);
+    setHashKey('');
   };
 
   const handleDecrypt = async () => {
-    if (!selectedDoc || !decryptionKey) {
-      setError('Please select a document and enter a decryption key');
+    if (!selectedDoc) {
+      setError('Please select a document');
       return;
     }
 
-    setDecrypting(true);
+    // If hash key is provided, use it; otherwise use the document's CID
+    const cid = hashKey || selectedDoc.cid;
+    
+    setViewing(true);
     setError('');
     
     try {
-      const response = await IPFSService.getFile(selectedDoc.cid);
+      const response = await IPFSService.getFile(cid);
       
       if (!response.success) {
         throw new Error(`Failed to fetch file from IPFS: ${response.error}`);
       }
       
-      const decryptionResult = await decryptFileWithPassphrase(
-        response.data,
-        decryptionKey,
-        selectedDoc.passphraseHash,
-        selectedDoc.salt
-      );
-
-      if (!decryptionResult.success) {
-        throw new Error(decryptionResult.error || "Decryption failed. Please check your key.");
-      }
-
-      const decryptedData = selectedDoc.prefix 
-        ? selectedDoc.prefix + decryptionResult.decryptedData 
-        : decryptionResult.decryptedData;
-
-      setDecryptedContent(decryptedData);
-      setSuccess('Document decrypted successfully!');
+      // Convert to viewable format based on file type
+      const viewableData = `data:${selectedDoc.type};base64,${response.data}`;
+      setViewContent(viewableData);
+      setSuccess('Document retrieved successfully!');
     } catch (error) {
-      console.error('Decryption error:', error);
-      setError(error.message || 'Failed to decrypt document');
+      console.error('Retrieval error:', error);
+      setError(error.message || 'Failed to retrieve document');
     } finally {
-      setDecrypting(false);
+      setViewing(false);
     }
   };
 
@@ -164,6 +153,48 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
           <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
           <polyline points="13 2 13 9 20 9"></polyline>
         </svg>
+      );
+    }
+  };
+
+  const renderDocumentPreview = () => {
+    if (!viewContent) return null;
+
+    if (selectedDoc.type.includes('image')) {
+      return (
+        <img 
+          src={viewContent} 
+          alt={selectedDoc.name} 
+          className={styles.previewImage}
+        />
+      );
+    } else if (selectedDoc.type.includes('pdf')) {
+      return (
+        <div className={styles.pdfPreviewContainer}>
+          <iframe 
+            src={viewContent} 
+            className={styles.pdfPreview} 
+            title={selectedDoc.name}
+          />
+        </div>
+      );
+    } else {
+      return (
+        <div className={styles.genericPreview}>
+          <p>This file type cannot be previewed directly.</p>
+          <a 
+            href={viewContent} 
+            download={selectedDoc.name}
+            className={styles.downloadLink}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download File
+          </a>
+        </div>
       );
     }
   };
@@ -288,29 +319,29 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
                 <p><strong>Type:</strong> {selectedDoc.type}</p>
                 <p><strong>Size:</strong> {(selectedDoc.size / 1024).toFixed(1)} KB</p>
                 <p><strong>Uploaded:</strong> {selectedDoc.timestamp ? new Date(selectedDoc.timestamp).toLocaleString() : 'Unknown'}</p>
-                <p><strong>CID:</strong> <span className={styles.cid}>{selectedDoc.cid}</span></p>
+                <p><strong>IPFS Hash:</strong> <span className={styles.cid}>{selectedDoc.cid}</span></p>
               </div>
               
-              {!decryptedContent ? (
+              {!viewContent ? (
                 <div className={styles.decryptionSection}>
                   <h4>Decrypt Document</h4>
                   <div className={styles.decryptionForm}>
                     <input 
-                      type="password" 
-                      placeholder="Enter decryption key" 
-                      value={decryptionKey}
-                      onChange={(e) => setDecryptionKey(e.target.value)}
+                      type="text" 
+                      placeholder="Enter IPFS hash key (optional)" 
+                      value={hashKey}
+                      onChange={(e) => setHashKey(e.target.value)}
                       className={styles.decryptionInput}
                     />
                     <button 
                       className={styles.decryptActionButton}
                       onClick={handleDecrypt}
-                      disabled={decrypting || !decryptionKey}
+                      disabled={viewing}
                     >
-                      {decrypting ? (
+                      {viewing ? (
                         <>
                           <div className={styles.buttonSpinner}></div>
-                          Decrypting...
+                          Loading...
                         </>
                       ) : (
                         <>
@@ -327,46 +358,16 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
               ) : (
                 <div className={styles.previewContent}>
                   <h4>Document Preview</h4>
-                  {selectedDoc.type.includes('image') ? (
-                    <img 
-                      src={decryptedContent} 
-                      alt={selectedDoc.name} 
-                      className={styles.previewImage}
-                    />
-                  ) : selectedDoc.type.includes('pdf') ? (
-                    <div className={styles.pdfPreviewContainer}>
-                      <iframe 
-                        src={decryptedContent} 
-                        className={styles.pdfPreview} 
-                        title={selectedDoc.name}
-                      />
-                    </div>
-                  ) : (
-                    <div className={styles.genericPreview}>
-                      <p>This file type cannot be previewed directly.</p>
-                      <a 
-                        href={decryptedContent} 
-                        download={selectedDoc.name}
-                        className={styles.downloadLink}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                          <polyline points="7 10 12 15 17 10"></polyline>
-                          <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        Download File
-                      </a>
-                    </div>
-                  )}
+                  {renderDocumentPreview()}
                 </div>
               )}
               
               <div className={styles.documentActions}>
-                {!decryptedContent ? (
+                {!viewContent ? (
                   <button 
                     className={styles.viewDocumentButton}
                     onClick={handleDecrypt}
-                    disabled={decrypting || !decryptionKey}
+                    disabled={viewing}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -376,7 +377,7 @@ const PatientSettingsForm = ({ onDocumentsUpdate, initialDocuments = [], initial
                   </button>
                 ) : (
                   <a 
-                    href={decryptedContent} 
+                    href={viewContent} 
                     download={selectedDoc.name}
                     className={styles.downloadButton}
                   >

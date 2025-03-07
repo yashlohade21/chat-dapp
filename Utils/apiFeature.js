@@ -9,6 +9,12 @@ import {
 
 export const ChechIfWalletConnected = async () => {
   try {
+    // Check if user is logged out
+    if (localStorage.getItem("userLoggedOut") === "true") {
+      console.log("User is logged out, skipping wallet connection check");
+      return null;
+    }
+
     if (!window.ethereum) {
       console.log("Install MetaMask");
       return null;
@@ -33,6 +39,12 @@ export const ChechIfWalletConnected = async () => {
 
 export const connectWallet = async () => {
   try {
+    // Check if user is logged out
+    if (localStorage.getItem("userLoggedOut") === "true") {
+      console.log("User is logged out, clearing flag before connecting wallet");
+      localStorage.removeItem("userLoggedOut");
+    }
+
     if (!window.ethereum) {
       alert("Please install MetaMask to use this application");
       return "";
@@ -73,6 +85,12 @@ const fetchContract = (signerOrProvider) =>
   new ethers.Contract(ChatAppAddress, ChatAppABI, signerOrProvider);
 
 export const connectingWithContract = async (retries = 3) => {
+  // Check if user is logged out
+  if (localStorage.getItem("userLoggedOut") === "true") {
+    console.log("User is logged out, skipping contract connection");
+    return null;
+  }
+
   for (let i = 0; i < retries; i++) {
     try {
       // Initialize Web3Modal with options

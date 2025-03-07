@@ -28,9 +28,9 @@ export const IPFSService = {
         throw new Error('Invalid file provided');
       }
 
-      const MAX_FILE_SIZE = 10 * 1024 * 1024;
+      const MAX_FILE_SIZE = 50 * 1024 * 1024;
       if (file.size > MAX_FILE_SIZE) {
-        throw new Error('File size exceeds 10MB limit');
+        throw new Error('File size exceeds 50MB limit');
       }
 
       if (!PINATA_API_KEY || !PINATA_SECRET_KEY) {
@@ -141,6 +141,100 @@ export const IPFSService = {
       success: false,
       error: lastError?.message || 'Failed to fetch file after trying all gateways',
       size: 0
+    };
+  },
+  
+  uploadJSON: async (data, fileName = 'data.json') => {
+    try {
+      if (!PINATA_API_KEY || !PINATA_SECRET_KEY) {
+        throw new Error('Pinata API keys not configured');
+      }
+      
+      const jsonData = typeof data === 'string' ? data : JSON.stringify(data);
+      
+      const pinataBody = {
+        pinataContent: jsonData
+      };
+      
+      const pinataMetadata = {
+        name: fileName,
+        keyvalues: {
+          uploadTime: new Date().toISOString()
+        }
+      };
+      
+      const response = await axios.post(
+        PINATA_PIN_JSON_URL,
+        {
+          pinataContent: jsonData,
+          pinataMetadata
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            pinata_api_key: PINATA_API_KEY,
+            pinata_secret_api_key: PINATA_SECRET_KEY
+          },
+          timeout: 30000
+        }
+      );
+      
+      if (!response.data || !response.data.IpfsHash) {
+        throw new Error('Invalid response from Pinata');
+      }
+      
+      return {
+        success: true,
+        cid: response.data.IpfsHash,
+        url: `${IPFS_GATEWAYS[0]}${response.data.IpfsHash}`
+      };
+    } catch (error) {
+      console.error('Error uploading JSON to IPFS:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to upload JSON'
+      };
+    }
+  },
+  
+  getJSON: async (cid, retries = 3) => {
+    let lastError = null;
+    
+    for (const gateway of IPFS_GATEWAYS) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          console.log(`Attempting to fetch JSON from gateway: ${gateway}, attempt ${i + 1}`);
+          
+          const response = await axios.get(`${gateway}${cid}`, {
+            timeout: 15000,
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (!response.data) {
+            throw new Error('Empty response from IPFS');
+          }
+          
+          return {
+            success: true,
+            data: response.data,
+            gateway: gateway
+          };
+        } catch (error) {
+          console.error(`IPFS JSON fetch attempt ${i + 1} failed for gateway ${gateway}:`, error);
+          lastError = error;
+          
+          if (i < retries - 1) {
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+          }
+        }
+      }
+    }
+    
+    return {
+      success: false,
+      error: lastError?.message || 'Failed to fetch JSON after trying all gateways'
     };
   }
 };

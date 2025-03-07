@@ -31,6 +31,12 @@ export const ChatAppProvider = ({ children }) => {
   //FETCH DATA TIME OF PAGE LOAD
   const fetchData = async () => {
     try {
+      // Check if user is logged out
+      if (localStorage.getItem("userLoggedOut") === "true") {
+        console.log("User is logged out, skipping wallet connection");
+        return;
+      }
+
       const address = await ChechIfWalletConnected();
       setAccount(address || ""); // Set empty string if no address
       if (address) {
@@ -71,7 +77,7 @@ export const ChatAppProvider = ({ children }) => {
     fetchData();
   }, []);
 
-  //Logout function
+  // Logout function
   const logout = () => {
     // Clear all user-related state
     setAccount("");
@@ -82,8 +88,16 @@ export const ChatAppProvider = ({ children }) => {
     setCurrentUserName("");
     setCurrentUserAddress("");
     
+    // Set a flag in localStorage to indicate user is logged out
+    localStorage.setItem("userLoggedOut", "true");
+    
     // Clear any stored user data in localStorage
     localStorage.removeItem("walletConnected");
+    
+    // Attempt to disconnect from MetaMask if possible
+    if (window.ethereum && window.ethereum.removeAllListeners) {
+      window.ethereum.removeAllListeners();
+    }
     
     // Redirect to home page
     router.push("/");
@@ -145,6 +159,9 @@ export const ChatAppProvider = ({ children }) => {
       
       // Update the username state
       setUserName(name);
+      
+      // Clear the logged out flag when creating a new account
+      localStorage.removeItem("userLoggedOut");
       
       // Refresh the page to update UI
       window.location.reload();
@@ -505,5 +522,3 @@ export const ChatAppProvider = ({ children }) => {
 };
 
 export default ChatAppProvider;
-
-

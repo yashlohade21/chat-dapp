@@ -34,16 +34,6 @@ Required packages for HIPAA compliance and security:
 - tweetnacl-util: For encoding/decoding encrypted data
 - axios: For making HTTP requests to IPFS/Pinata API
 
-## Encryption Key Management
-- Store encryption keys in localStorage to persist across sessions
-- Generate new key only if none exists in localStorage
-- Use Web Crypto API's subtle.generateKey when available
-- Fall back to getRandomValues if subtle crypto fails
-- Final fallback to CryptoJS.random
-- Never store encryption keys on chain
-- Use same key for related encrypt/decrypt operations
-- Handle key generation failures gracefully with CryptoJS fallback
-
 ## Form Validation & Security
 - Validate all patient data on client side before encryption
 - Show HIPAA compliance warnings before submission
@@ -63,19 +53,8 @@ Required packages for HIPAA compliance and security:
 ## File Storage
 IPFS is used for decentralized file storage:
 - Handle partial upload success - continue processing remaining files if one fails
-- Validate both file type and size before upload attempt
-- Show granular progress updates during encryption and upload
-- Store encryption keys securely, but don't block upload if storage fails
-- Implement retries with exponential backoff for IPFS fetches
-- Always validate CIDs before storage/retrieval
-- Store file metadata (name, size, type) with the upload
-- Handle timeouts and connection issues gracefully
-- When IPFS upload fails, preserve form data and allow retrying just the failed upload
-- Show specific error messages from Pinata API when available
-- Handle partial upload success - continue processing remaining files if one fails
-- Validate both file type and size before upload attempt
-- Show granular progress updates during encryption and upload
-- Store encryption keys securely, but don't block upload if storage fails
+- Validate file size before upload attempt
+- Show granular progress updates during upload
 - Implement retries with exponential backoff for IPFS fetches
 - Always validate CIDs before storage/retrieval
 - Store file metadata (name, size, type) with the upload
@@ -85,25 +64,18 @@ IPFS is used for decentralized file storage:
 - Medical documents are uploaded to IPFS via Pinata
 - Required environment variables: PINATA_API_KEY, PINATA_SECRET_KEY
 - Files are referenced by their CID (Content Identifier)
-- Patient data is encrypted before IPFS storage
-- Only store CIDs on chain, never raw or encrypted data
+- Only store CIDs on chain, never raw data
 - Always verify IPFS upload success before blockchain storage
 - Gateway URL: https://gateway.pinata.cloud/ipfs/
-- File size limit: 10MB per file
+- File size limit: 50MB per file
 - Implement retries with exponential backoff for IPFS fetches
 - Always validate CIDs before storage/retrieval
 - Store file metadata (name, size, type) with the upload
 - Handle timeouts and connection issues gracefully
 - When IPFS upload fails, preserve form data and allow retrying just the failed upload
 - Show specific error messages from Pinata API when available
-
-## File Encryption Best Practices
-- Store encrypted files as 'text/plain' type for consistent handling
-- Use base64 encoding for binary data before encryption
-- Store encryption metadata (salt, hash) separately from encrypted data
-- Clear local storage when encryption format changes
-- Always verify decryption key using hash before attempting decryption
-- Handle binary data conversion consistently throughout the process
+- Display IPFS hash keys to users after successful upload
+- Allow users to view files using their IPFS hash key
 
 ## TensorFlow.js Best Practices
 - Give unique names to layers to prevent registration conflicts
@@ -402,3 +374,42 @@ The chatbot will now be able to:
 - Detect unusual symptoms and provide relevant recommendations
 
 If you have any issues with the training process, you can check the console logs for more detailed information about any errors that might occur.
+
+## Authentication and Wallet Management
+
+### Wallet Connection
+- Always check if user is logged out before attempting to connect to wallet
+- Store logout state in localStorage to persist across page refreshes
+- Clear logout flag when user explicitly connects wallet again
+- Handle wallet connection errors gracefully with user-friendly messages
+- Implement proper network switching to ensure correct blockchain network
+
+### Logout Functionality
+- Clear all application state (account, userName, friendLists, etc.)
+- Set a flag in localStorage to prevent automatic reconnection
+- Remove any wallet-related event listeners
+- Clear any sensitive data from localStorage
+- Redirect user to home page after logout
+- Provide visual feedback for successful logout
+
+## Web Scraped Content
+
+Title: 
+
+URL Source: https://gateway.pinata.cloud/ipfs/
+
+Warning: Target URL returned error 500: Internal Server Error
+
+Markdown Content:
+Key name cannot be empty.
+
+## Web Scraped Content
+
+Title: 
+
+URL Source: https://gateway.pinata.cloud/ipfs/
+
+Warning: Target URL returned error 500: Internal Server Error
+
+Markdown Content:
+Key name cannot be empty.

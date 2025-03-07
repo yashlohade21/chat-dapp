@@ -1,19 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './HIPAACompliance.module.css';
 import { IPFSService } from '../../Utils/IPFSService';
-import { encryptFileWithPassphrase, decryptFileWithPassphrase } from '../../Utils/CryptoService';
-import CryptoJS from 'crypto-js';
-
-const allowedFileTypes = [
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'application/dicom',
-  'image/gif',
-  '.dcm',
-  'application/zip',
-  'application/x-zip-compressed'
-];
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -23,13 +10,13 @@ const MedicalFileUpload = ({ onUpload, account }) => {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [showDecryptionKey, setShowDecryptionKey] = useState(false);
-  const [generatedPassphrase, setGeneratedPassphrase] = useState('');
+  const [showHashKey, setShowHashKey] = useState(false);
+  const [fileHashKey, setFileHashKey] = useState('');
 
   useEffect(() => {
     if (account) {
-      const secureStorage = JSON.parse(localStorage.getItem('secureFileStorage') || '{}');
-      const userFiles = Object.values(secureStorage).filter(file => file.owner === account);
+      const fileStorage = JSON.parse(localStorage.getItem('fileStorage') || '{}');
+      const userFiles = Object.values(fileStorage).filter(file => file.owner === account);
       setUploadedFiles(userFiles);
     } else {
       setUploadedFiles([]);
@@ -39,13 +26,8 @@ const MedicalFileUpload = ({ onUpload, account }) => {
   const handleFileSelect = (event) => {
     try {
       const selectedFiles = Array.from(event.target.files || []);
-      const invalidFiles = selectedFiles.filter(file => !allowedFileTypes.includes(file.type));
       const oversizedFiles = selectedFiles.filter(file => file.size > MAX_FILE_SIZE);
       
-      if (invalidFiles.length > 0) {
-        setError(`Some files have invalid types. Allowed types: PDF, ZIP, Images.`);
-        return;
-      }
       if (oversizedFiles.length > 0) {
         setError(`Some files exceed the 50MB size limit.`);
         return;
@@ -76,13 +58,8 @@ const MedicalFileUpload = ({ onUpload, account }) => {
   };
 
   const handleFiles = (selectedFiles) => {
-    const invalidFiles = selectedFiles.filter(file => !allowedFileTypes.includes(file.type));
     const oversizedFiles = selectedFiles.filter(file => file.size > MAX_FILE_SIZE);
     
-    if (invalidFiles.length > 0) {
-      setError(`Some files have invalid types. Allowed types: PDF, ZIP, Images.`);
-      return;
-    }
     if (oversizedFiles.length > 0) {
       setError(`Some files exceed the 50MB size limit.`);
       return;
@@ -103,37 +80,21 @@ const MedicalFileUpload = ({ onUpload, account }) => {
     setError('');
 
     try {
-      const randomKey = CryptoJS.lib.WordArray.random(32).toString();
-      setGeneratedPassphrase(randomKey);
-
       const uploadedFilesArray = [];
+      const hashKeys = [];
+      
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        setProgress((i / files.length) * 25);
+        setProgress((i / files.length) * 50);
 
-        const fileData = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-
-        if (!fileData) {
-          throw new Error('Failed to read file');
-        }
-
-        const encryptResult = await encryptFileWithPassphrase(fileData, randomKey);
-        
-        if (!encryptResult.success) {
-          throw new Error(encryptResult.error || "Encryption failed");
+        const result = await IPFSService.uploadFile(file);
+        if (!result.success) {
+          throw new Error(result.error || 'Upload failed');
         }
 
         const fileMetadata = {
-          cid: null,
-          passphraseHash: encryptResult.passphraseHash,
-          salt: encryptResult.salt,
-          prefix: encryptResult.prefix,
+          cid: result.cid,
           name: file.name,
           type: file.type,
           size: file.size,
@@ -141,31 +102,18 @@ const MedicalFileUpload = ({ onUpload, account }) => {
           owner: account
         };
 
-        const encryptedBlob = new Blob([encryptResult.encryptedData], { 
-          type: 'application/octet-stream' 
-        });
-        
-        const encryptedFile = new File([encryptedBlob], file.name, { 
-          type: 'application/octet-stream' 
-        });
-
-        const result = await IPFSService.uploadFile(encryptedFile);
-        if (!result.success) {
-          throw new Error(result.error || 'Upload failed');
-        }
-
-        fileMetadata.cid = result.cid;
+        hashKeys.push(result.cid);
 
         try {
-          const secureStorage = JSON.parse(localStorage.getItem('secureFileStorage') || '{}');
-          secureStorage[result.cid] = fileMetadata;
-          localStorage.setItem('secureFileStorage', JSON.stringify(secureStorage));
+          const fileStorage = JSON.parse(localStorage.getItem('fileStorage') || '{}');
+          fileStorage[result.cid] = fileMetadata;
+          localStorage.setItem('fileStorage', JSON.stringify(fileStorage));
         } catch (storageError) {
-          console.error('Failed to store encryption details:', storageError);
+          console.error('Failed to store file details:', storageError);
         }
 
         uploadedFilesArray.push(fileMetadata);
-        setProgress(75 + (i / files.length) * 25);
+        setProgress(50 + (i / files.length) * 50);
       }
 
       setUploadedFiles(prev => {
@@ -179,8 +127,9 @@ const MedicalFileUpload = ({ onUpload, account }) => {
 
       setFiles([]);
       setProgress(100);
-      setShowDecryptionKey(true);
-      alert(`File(s) uploaded successfully!\nYour decryption key: ${randomKey}\n\nPlease save this key securely - you'll need it to view your files.`);
+      
+      setFileHashKey(hashKeys.join(', '));
+      setShowHashKey(true);
     } catch (err) {
       console.error('Upload error:', err);
       setError('Error uploading files: ' + (err.message || 'Unknown error'));
@@ -219,10 +168,9 @@ const MedicalFileUpload = ({ onUpload, account }) => {
             type="file"
             multiple
             onChange={handleFileSelect}
-            accept={allowedFileTypes.join(',')}
             className={styles.fileInput}
           />
-          <span className={styles.uploadHint}>PDF, JPEG, PNG, GIF, DICOM, ZIP (max 50MB)</span>
+          <span className={styles.uploadHint}>All file types supported (max 50MB)</span>
         </div>
 
         {files.length > 0 && (
@@ -291,24 +239,24 @@ const MedicalFileUpload = ({ onUpload, account }) => {
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
-              Upload Securely
+              Upload to IPFS
             </>
           )}
         </button>
       </div>
 
-      {showDecryptionKey && (
+      {showHashKey && (
         <div className={styles.decryptionKeyModal}>
           <div className={styles.decryptionKeyContent}>
-            <h4>IMPORTANT: Your Decryption Key</h4>
-            <p>Please save this key securely – you will need it to decrypt your files:</p>
+            <h4>IMPORTANT: Your IPFS Hash Key</h4>
+            <p>Please save this hash key securely – you will need it to access your files:</p>
             <div className={styles.keyContainer}>
-              <pre>{generatedPassphrase}</pre>
+              <pre>{fileHashKey}</pre>
               <button 
                 className={styles.copyButton}
                 onClick={() => {
-                  navigator.clipboard.writeText(generatedPassphrase);
-                  alert('Decryption key copied to clipboard!');
+                  navigator.clipboard.writeText(fileHashKey);
+                  alert('IPFS hash key copied to clipboard!');
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -319,7 +267,7 @@ const MedicalFileUpload = ({ onUpload, account }) => {
               </button>
             </div>
             <div className={styles.modalActions}>
-              <button onClick={() => setShowDecryptionKey(false)}>Close</button>
+              <button onClick={() => setShowHashKey(false)}>Close</button>
             </div>
           </div>
         </div>

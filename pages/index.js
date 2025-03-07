@@ -10,6 +10,12 @@ import Image from "next/image";
 const ChatApp = () => {
   const { account, connectWallet } = useContext(ChatAppContect) || {};
 
+  const handleConnectWallet = () => {
+    // Clear the logged out flag when user wants to connect
+    localStorage.removeItem("userLoggedOut");
+    connectWallet();
+  };
+
   // If no account is connected, show a warning message
   if (!account) {
     return (
@@ -20,7 +26,7 @@ const ChatApp = () => {
           <p>Connect your MetaMask wallet to start chatting securely.</p>
           <p>This decentralized chat application requires a wallet connection to access all features.</p>
           <button 
-            onClick={connectWallet}
+            onClick={handleConnectWallet}
             className={Style.connectButton}
           >
             Connect Wallet
