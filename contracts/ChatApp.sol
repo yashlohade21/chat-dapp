@@ -30,6 +30,14 @@ contract ChatApp {
         bool exists;
     }
 
+    struct Profile {
+        string name;
+        string email;
+        string phone;
+    }
+
+    mapping(address => Profile) public profiles;
+    
     // Mapping of user addresses to User structs
     mapping(address => User) private users;
     
@@ -130,6 +138,15 @@ contract ChatApp {
     // Get a user's name
     function getUsername(address pubkey) external view userExists(pubkey) returns(string memory) {
         return users[pubkey].name;
+    }
+
+    function saveProfile(string memory _name, string memory _email, string memory _phone) public {
+        profiles[msg.sender] = Profile(_name, _email, _phone);
+    }
+
+    function getProfile() public view returns (string memory, string memory, string memory) {
+        Profile memory profile = profiles[msg.sender];
+        return (profile.name, profile.email, profile.phone);
     }
 
     // Get all registered users
