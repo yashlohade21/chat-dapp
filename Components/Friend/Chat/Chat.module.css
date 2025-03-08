@@ -1,3 +1,4 @@
+/* Base Styles */
 .Chat {
   padding: 1rem;
   background-color: var(--card-bg-color);
@@ -301,6 +302,7 @@
   box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
 }
 
+/* Base Styles */
 .message_input {
   flex: 1;
   height: 45px;
@@ -313,6 +315,24 @@
   transition: all 0.3s ease;
 }
 
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .message_input {
+    height: 40px;
+    padding: 0 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .message_input {
+    height: 35px;
+    padding: 0 0.8rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Focus State */
 .message_input:focus {
   outline: none;
   border-color: var(--primary-color);
@@ -320,6 +340,7 @@
   box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
 }
 
+/* Disabled State */
 .input_disabled {
   opacity: 0.7;
   cursor: not-allowed;

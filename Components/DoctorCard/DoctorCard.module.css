@@ -236,3 +236,118 @@
     box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
   }
 }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .card {
+    padding: 1rem;
+  }
+
+  .header {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .verifiedBadge {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+
+  .info h3 {
+    font-size: 1rem;
+  }
+
+  .specialty {
+    font-size: 0.8rem;
+  }
+
+  .ratingValue {
+    font-size: 0.8rem;
+  }
+
+  .availability {
+    font-size: 0.8rem;
+  }
+
+  .bio {
+    font-size: 0.8rem;
+  }
+
+  .tag {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .connectButton {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .calendarIcon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 0.75rem;
+  }
+
+  .header {
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .avatar {
+    width: 70px;
+    height: 70px;
+  }
+
+  .verifiedBadge {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+
+  .info h3 {
+    font-size: 0.9rem;
+  }
+
+  .specialty {
+    font-size: 0.75rem;
+  }
+
+  .ratingValue {
+    font-size: 0.75rem;
+  }
+
+  .availability {
+    font-size: 0.75rem;
+  }
+
+  .bio {
+    font-size: 0.75rem;
+  }
+
+  .tag {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+  }
+
+  .connectButton {
+    padding: 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .calendarIcon {
+    width: 14px;
+    height: 14px;
+  }
+}

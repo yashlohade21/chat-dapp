@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useState, useContext } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-//INTERNAL IMPORT
+// INTERNAL IMPORT
 import Style from "./NavBar.module.css";
 import { ChatAppContect } from "../../Context/ChatAppContext";
 import { Model, Error } from "../index";
@@ -33,14 +33,19 @@ const NavBar = () => {
   ];
 
   const [active, setActive] = useState(2);
-  const [open, setOpen] = useState(false);
   const [openModel, setOpenModel] = useState(false);
   const [openUserModel, setOpenUserModel] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const { account, userName, connectWallet, createAccount, error, logout } = useContext(ChatAppContect);
+  const { account, userName, connectWallet, createAccount, error, logout } =
+    useContext(ChatAppContect);
 
   const handleLogout = () => {
     logout();
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   return (
@@ -49,11 +54,20 @@ const NavBar = () => {
         <div className={Style.NavBar_box_left}>
           <Image src={images.logo} alt="logo" width={50} height={50} />
         </div>
+
         <div className={Style.NavBar_box_right}>
-          <div className={Style.NavBar_box_right_menu}>
+          {/* Desktop Menu */}
+          <div
+            className={`${Style.NavBar_box_right_menu} ${
+              isMobileMenuOpen ? Style.mobileMenuOpen : ""
+            }`}
+          >
             {menuItems.map((el, i) => (
               <div
-                onClick={() => setActive(i + 1)}
+                onClick={() => {
+                  setActive(i + 1);
+                  setIsMobileMenuOpen(false); // Close mobile menu on item click
+                }}
                 key={i + 1}
                 className={`${Style.NavBar_box_right_menu_items} ${
                   active == i + 1 ? Style.active_btn : ""
@@ -69,27 +83,38 @@ const NavBar = () => {
             ))}
           </div>
 
+          {/* Buttons (Connect Wallet, Create Account, Logout) */}
           <div className={Style.NavBar_box_right_buttons}>
             {!account ? (
               <>
-                <button 
+                <button
                   onClick={connectWallet}
                   className={Style.connectWalletBtn}
                 >
-                  <Image src={images.accountName} alt="Account" width={20} height={20} />
+                  <Image
+                    src={images.accountName}
+                    alt="Account"
+                    width={20}
+                    height={20}
+                  />
                   Connect Wallet
                 </button>
-                <button 
+                <button
                   onClick={() => setOpenModel(true)}
                   className={Style.createAccountBtn}
                 >
-                  <Image src={images.create2} alt="Create" width={20} height={20} />
+                  <Image
+                    src={images.create2}
+                    alt="Create"
+                    width={20}
+                    height={20}
+                  />
                   Create Account
                 </button>
               </>
             ) : (
               <div className={Style.loggedInControls}>
-                <button 
+                <button
                   className={Style.connectedWalletBtn}
                   onClick={() => setOpenUserModel(true)}
                 >
@@ -101,20 +126,28 @@ const NavBar = () => {
                   />
                   <small>{userName || account.slice(0, 6)}...</small>
                 </button>
-                
-                <button 
-                  onClick={handleLogout}
-                  className={Style.logoutBtn}
-                >
+
+                <button onClick={handleLogout} className={Style.logoutBtn}>
                   <Image src={images.close} alt="Logout" width={16} height={16} />
                   Logout
                 </button>
               </div>
             )}
           </div>
+
+          {/* Mobile Menu Icon */}
+          <div className={Style.mobileMenuIcon} onClick={toggleMobileMenu}>
+            <Image
+              src={isMobileMenuOpen ? images.close : images.menu}
+              alt="Menu"
+              width={24}
+              height={24}
+            />
+          </div>
         </div>
       </div>
 
+      {/* Models */}
       {openModel && (
         <div className={Style.modelBox}>
           <Model
@@ -132,7 +165,7 @@ const NavBar = () => {
 
       {openUserModel && (
         <div className={Style.modelBox}>
-          <UserAccountModel 
+          <UserAccountModel
             openBox={setOpenUserModel}
             account={account}
             createAccount={createAccount}
@@ -144,6 +177,8 @@ const NavBar = () => {
     </div>
   );
 };
+
+export default NavBar;
 
 const UserAccountModel = ({ openBox, account, createAccount }) => {
   const [name, setName] = useState("");
@@ -196,13 +231,11 @@ const UserAccountModel = ({ openBox, account, createAccount }) => {
 
           <div className={Style.formGroup}>
             <label>MetaMask Address</label>
-            <div className={Style.walletAddress}>
-              {account}
-            </div>
+            <div className={Style.walletAddress}>{account}</div>
           </div>
 
           <div className={Style.buttonGroup}>
-            <button 
+            <button
               onClick={handleSubmit}
               className={Style.submitButton}
               disabled={loading}
@@ -211,12 +244,17 @@ const UserAccountModel = ({ openBox, account, createAccount }) => {
                 <div className={Style.buttonLoader}></div>
               ) : (
                 <>
-                  <Image src={images.create2} alt="Create" width={20} height={20} />
+                  <Image
+                    src={images.create2}
+                    alt="Create"
+                    width={20}
+                    height={20}
+                  />
                   Create Account
                 </>
               )}
             </button>
-            <button 
+            <button
               onClick={() => openBox(false)}
               className={Style.cancelButton}
               disabled={loading}
@@ -230,5 +268,3 @@ const UserAccountModel = ({ openBox, account, createAccount }) => {
     </div>
   );
 };
-
-export default NavBar;

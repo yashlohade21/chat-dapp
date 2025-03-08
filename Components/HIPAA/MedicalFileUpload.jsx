@@ -74,25 +74,32 @@ const MedicalFileUpload = ({ onUpload, account }) => {
       setError(files.length ? 'Please connect your wallet' : 'Please select files');
       return;
     }
-
+  
     setUploading(true);
     setProgress(0);
     setError('');
-
+  
     try {
       const uploadedFilesArray = [];
       const hashKeys = [];
-      
+  
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        
+  
         setProgress((i / files.length) * 50);
-
+  
+        // Upload file to IPFS
         const result = await IPFSService.uploadFile(file);
         if (!result.success) {
           throw new Error(result.error || 'Upload failed');
         }
-
+  
+        // Verify file integrity by fetching it back
+        const fetchResult = await IPFSService.getFile(result.cid);
+        if (!fetchResult.success) {
+          throw new Error('File verification failed');
+        }
+  
         const fileMetadata = {
           cid: result.cid,
           name: file.name,
@@ -101,9 +108,10 @@ const MedicalFileUpload = ({ onUpload, account }) => {
           timestamp: Date.now(),
           owner: account
         };
-
+  
         hashKeys.push(result.cid);
-
+  
+        // Store file metadata in localStorage
         try {
           const fileStorage = JSON.parse(localStorage.getItem('fileStorage') || '{}');
           fileStorage[result.cid] = fileMetadata;
@@ -111,23 +119,23 @@ const MedicalFileUpload = ({ onUpload, account }) => {
         } catch (storageError) {
           console.error('Failed to store file details:', storageError);
         }
-
+  
         uploadedFilesArray.push(fileMetadata);
         setProgress(50 + (i / files.length) * 50);
       }
-
+  
       setUploadedFiles(prev => {
         const userFiles = prev.filter(file => file.owner === account);
         return [...userFiles, ...uploadedFilesArray];
       });
-
+  
       if (onUpload) {
         await onUpload(uploadedFilesArray);
       }
-
+  
       setFiles([]);
       setProgress(100);
-      
+  
       setFileHashKey(hashKeys.join(', '));
       setShowHashKey(true);
     } catch (err) {
