@@ -10,7 +10,6 @@ import {
   Tooltip,
   Legend
 } from 'recharts';
-
 import { AIService, SUPPORTED_LANGUAGES } from "../../../Utils/AIService";
 import Style from "./Chat.module.css";
 import images from "../../../assets";
@@ -335,191 +334,6 @@ const Chat = ({ currentAccount, currentUser, currentFriend }) => {
     }
   }, [message, loading, sendMessage, chatData.address]);
 
-  const handleAppointmentSubmit = async (e) => {
-    e.preventDefault();
-    if (!appointmentData.date || !appointmentData.time || !appointmentData.reason) {
-      alert("Please fill in all required fields");
-      return;
-    }
-
-    try {
-      setLocalLoading(true);
-      
-      const uploadedFileUrls = [];
-      
-      if (selectedFiles.length > 0) {
-        setUploadProgress(0);
-        const totalFiles = selectedFiles.length;
-        
-        for (let i = 0; i < selectedFiles.length; i++) {
-          const file = selectedFiles[i];
-          const result = await IPFSService.uploadFile(file);
-          
-          if (result.success) {
-            uploadedFileUrls.push({
-              name: file.name,
-              url: result.url,
-              type: file.type
-            });
-          } else {
-            console.error(`Failed to upload file ${file.name}:`, result.error);
-          }
-          
-          setUploadProgress(((i + 1) / totalFiles) * 100);
-        }
-      }
-      
-      let appointmentMsg = `🏥 *New Appointment Request*\n
-📅 Date: ${appointmentData.date}
-⏰ Time: ${appointmentData.time}
-📝 Reason: ${appointmentData.reason}
-${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
-🚨 Urgency: ${appointmentData.urgency.toUpperCase()}`;
-
-      if (uploadedFileUrls.length > 0) {
-        appointmentMsg += '\n\n📎 Attached Files:';
-        
-        for (const file of uploadedFileUrls) {
-          appointmentMsg += `\n- [${file.name}](${file.url})`;
-          appointmentMsg += `\n  [FILE]${file.name}|${file.url}`;
-        }
-      }
-      
-      await sendMessage({
-        msg: appointmentMsg,
-        address: chatData.address,
-      });
-
-      setShowAppointmentForm(false);
-      setAppointmentData({
-        date: "",
-        time: "",
-        reason: "",
-        symptoms: "",
-        urgency: "normal",
-      });
-      setSelectedFiles([]);
-      setUploadProgress(0);
-    } catch (error) {
-      console.error("Error sending appointment request:", error);
-      alert("Failed to send appointment request. Please try again.");
-    } finally {
-      setLocalLoading(false);
-    }
-  };
-
-  const handleFileSelect = (event) => {
-    const files = Array.from(event.target.files || []);
-    const maxFiles = 5;
-    const maxSize = 5 * 1024 * 1024; // 5MB
-
-    if (selectedFiles.length + files.length > maxFiles) {
-      alert(`You can only upload up to ${maxFiles} files at a time`);
-      return;
-    }
-
-    const validFiles = files.filter(file => {
-      if (file.size > maxSize) {
-        alert(`File ${file.name} is too large. Maximum size is 5MB`);
-        return false;
-      }
-      return true;
-    });
-
-    setSelectedFiles(prev => [...prev, ...validFiles].slice(0, maxFiles));
-  };
-
-  const removeFile = (index) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleFilesUpload = async () => {
-    if (!selectedFiles.length) return;
-    setUploadProgress(0);
-    const totalFiles = selectedFiles.length;
-    let uploadedFiles = 0;
-
-    try {
-      for (const file of selectedFiles) {
-        try {
-          const fileBuffer = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = (error) => reject(new Error(`Failed to read file: ${error.message}`));
-            reader.readAsArrayBuffer(file);
-          });
-          
-          let base64Data;
-          try {
-            base64Data = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
-          } catch (error) {
-            throw new Error(`Failed to convert file to base64: ${error.message}`);
-          }
-
-          const randomKey = CryptoJS.lib.WordArray.random(32).toString();
-          const encryptionResult = await encryptFileWithPassphrase(base64Data, randomKey);
-          if (!encryptionResult.success) {
-            throw new Error(`Encryption failed for ${file.name}: ${encryptionResult.error}`);
-          }
-          const { encryptedData, passphraseHash, salt } = encryptionResult;
-
-          const encryptedFileBlob = new Blob([encryptedData], { type: file.type });
-          const encryptedFile = new File([encryptedFileBlob], file.name, { type: file.type });
-
-          const result = await IPFSService.uploadFile(encryptedFile);
-          if (!result.success) {
-            throw new Error(`Failed to upload ${file.name}: ${result.error}`);
-          }
-
-          const msg = `[ENC_FILE]${file.name}|${result.url}|${passphraseHash}|${salt}`;
-          await sendMessage({
-            msg,
-            address: chatData.address,
-          });
-
-          const keyMessage = `File "${file.name}" encrypted successfully!\n\nDecryption key (save this securely):\n${randomKey}`;
-          
-          const textarea = document.createElement('textarea');
-          textarea.value = randomKey;
-          textarea.style.position = 'fixed';
-          textarea.style.opacity = '0';
-          document.body.appendChild(textarea);
-          
-          if (window.confirm(keyMessage + '\n\nClick OK to copy the key to clipboard')) {
-            try {
-              textarea.select();
-              document.execCommand('copy');
-              alert('Decryption key copied to clipboard!');
-            } catch (copyError) {
-              console.error('Failed to copy to clipboard:', copyError);
-              alert('Could not copy automatically. Please manually select and copy the key:\n\n' + randomKey);
-            }
-          }
-          
-          document.body.removeChild(textarea);
-
-          uploadedFiles++;
-          setUploadProgress((uploadedFiles / totalFiles) * 100);
-        } catch (fileError) {
-          console.error(`Error processing file ${file.name}:`, fileError);
-          alert(`Failed to process ${file.name}: ${fileError.message}`);
-          continue;
-        }
-      }
-      
-      if (uploadedFiles === 0) {
-        throw new Error('No files were successfully uploaded');
-      }
-      
-      setSelectedFiles([]);
-      setUploadProgress(0);
-      alert(`Successfully uploaded ${uploadedFiles} out of ${totalFiles} files`);
-    } catch (error) {
-      console.error("Error uploading files:", error);
-      alert(`Error uploading files: ${error.message}`);
-    }
-  };
-
   const handleDecryptChatFile = async (name, url, passphraseHash, salt) => {
     const providedKey = window.prompt(`Enter decryption key for "${name}":`);
     if (!providedKey) return;
@@ -675,6 +489,149 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
     );
   };
 
+
+  
+  const handleFileSelect = (event) => {
+    const files = Array.from(event.target.files || []);
+    const maxFiles = 5;
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (selectedFiles.length + files.length > maxFiles) {
+      alert(`You can only upload up to ${maxFiles} files at a time`);
+      return;
+    }
+
+    const validFiles = files.filter(file => {
+      if (file.size > maxSize) {
+        alert(`File ${file.name} is too large. Maximum size is 5MB`);
+        return false;
+      }
+      return true;
+    });
+
+    setSelectedFiles(prev => [...prev, ...validFiles].slice(0, maxFiles));
+  };
+
+  const removeFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFilesUpload = async () => {
+    if (!selectedFiles.length) return;
+    setUploadProgress(0);
+    const totalFiles = selectedFiles.length;
+    let uploadedFiles = 0;
+
+    try {
+      for (const file of selectedFiles) {
+        try {
+          const result = await IPFSService.uploadFile(file);
+          if (!result.success) {
+            throw new Error(`Failed to upload ${file.name}: ${result.error}`);
+          }
+
+          const msg = `[FILE]${file.name}|${result.url}`;
+          await sendMessage({
+            msg,
+            address: currentFriend.address,
+          });
+
+          uploadedFiles++;
+          setUploadProgress((uploadedFiles / totalFiles) * 100);
+        } catch (fileError) {
+          console.error(`Error processing file ${file.name}:`, fileError);
+          alert(`Failed to process ${file.name}: ${fileError.message}`);
+          continue;
+        }
+      }
+
+      if (uploadedFiles === 0) {
+        throw new Error('No files were successfully uploaded');
+      }
+
+      setSelectedFiles([]);
+      setUploadProgress(0);
+      alert(`Successfully uploaded ${uploadedFiles} out of ${totalFiles} files`);
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      alert(`Error uploading files: ${error.message}`);
+    }
+  };
+
+  const handleAppointmentSubmit = async (e) => {
+    e.preventDefault();
+    if (!appointmentData.date || !appointmentData.time || !appointmentData.reason) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      setLocalLoading(true);
+      
+      const uploadedFileUrls = [];
+      
+      if (selectedFiles.length > 0) {
+        setUploadProgress(0);
+        const totalFiles = selectedFiles.length;
+        
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          const result = await IPFSService.uploadFile(file);
+          
+          if (result.success) {
+            uploadedFileUrls.push({
+              name: file.name,
+              url: result.url,
+              type: file.type
+            });
+          } else {
+            console.error(`Failed to upload file ${file.name}:`, result.error);
+          }
+          
+          setUploadProgress(((i + 1) / totalFiles) * 100);
+        }
+      }
+      
+      let appointmentMsg = `🏥 *New Appointment Request*\n
+📅 Date: ${appointmentData.date}
+⏰ Time: ${appointmentData.time}
+📝 Reason: ${appointmentData.reason}
+${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
+🚨 Urgency: ${appointmentData.urgency.toUpperCase()}`;
+
+      if (uploadedFileUrls.length > 0) {
+        appointmentMsg += '\n\n📎 Attached Files:';
+        
+        for (const file of uploadedFileUrls) {
+          appointmentMsg += `\n- [${file.name}](${file.url})`;
+          appointmentMsg += `\n  [FILE]${file.name}|${file.url}`;
+        }
+      }
+      
+      await sendMessage({
+        msg: appointmentMsg,
+        address: chatData.address,
+      });
+
+      setShowAppointmentForm(false);
+      setAppointmentData({
+        date: "",
+        time: "",
+        reason: "",
+        symptoms: "",
+        urgency: "normal",
+      });
+      setSelectedFiles([]);
+      setUploadProgress(0);
+    } catch (error) {
+      console.error("Error sending appointment request:", error);
+      alert("Failed to send appointment request. Please try again.");
+    } finally {
+      setLocalLoading(false);
+    }
+  };
+
+
   return (
     <div className={Style.Chat}>
       {userName && account ? (
@@ -700,90 +657,97 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
         </div>
       ) : null}
   
-      <div className={Style.Chat_box_box} ref={setChatBoxRef}>
-        <div className={Style.Chat_box}>
-          <div className={Style.Chat_box_left}>
-            {friendMsg && friendMsg.length > 0 ? (
-              friendMsg.map((el, i) => (
-                <div key={i}>
-                  <div className={Style.Chat_box_left_title}>
-                    <Image
-                      src={images.accountName}
-                      alt="Profile"
-                      width={50}
-                      height={50}
-                    />
-                    <span>
-                      {el.sender === chatData.address ? chatData.name : userName}
-                      <small>Time: {converTime(el.timestamp)}</small>
-                    </span>
-                  </div>
-                  <div className={Style.Chat_message_text}>
-                    {el.msg.startsWith('[ENC_FILE]') ? (
-                      (() => {
-                        const parts = el.msg.slice(9).split('|'); // remove prefix "[ENC_FILE]"
-                        const [fileName, fileUrl, passphraseHash, salt] = parts;
-                        const isImage = fileName.match(/\.(jpg|jpeg|png|gif)$/i);
-                        return (
-                          <div>
-                            {isImage ? (
-                              <img 
-                                src={fileUrl} 
-                                alt={fileName} 
-                                loading="lazy" 
-                                style={{ maxWidth: '300px' }}
-                              />
-                            ) : (
-                              <a href={fileUrl} download={fileName}>
-                                <span>📎</span> {fileName}
-                              </a>
-                            )}
-                            <button 
-                              onClick={() => handleDecryptChatFile(fileName, fileUrl, passphraseHash, salt)}
-                              style={{ display: 'block', marginTop: '0.5rem' }}
-                            >
-                              Decrypt File
-                            </button>
-                          </div>
-                        );
-                      })()
-                    ) : el.msg.startsWith('[FILE]') ? (
-                      (() => {
-                        const [name, data] = el.msg.slice(6).split('|');
-                        const isImage = name.match(/\.(jpg|jpeg|png|gif)$/i);
-                        const isPDF = name.match(/\.pdf$/i);
-                        return isImage ? (
-                          <img 
-                            src={data} 
-                            alt={name} 
-                            loading="lazy"
-                          />
+  <div className={Style.Chat_box_box}>
+  <div className={Style.Chat_box}>
+    <div className={Style.Chat_box_left}>
+      {friendMsg && friendMsg.length > 0 ? (
+        friendMsg.map((el, i) => (
+          <div key={i} className={Style.Chat_message_container}>
+            <div className={Style.Chat_box_left_title}>
+              <Image
+                src={images.accountName}
+                alt="Profile"
+                width={50}
+                height={50}
+              />
+              <span>
+                {el.sender === chatData.address ? chatData.name : userName}
+                <small>Time: {converTime(el.timestamp)}</small>
+              </span>
+            </div>
+            <div className={Style.Chat_message_text}>
+              {el.msg.startsWith('[ENC_FILE]') ? (
+                (() => {
+                  const parts = el.msg.slice(9).split('|'); // remove prefix "[ENC_FILE]"
+                  const [fileName, fileUrl, passphraseHash, salt] = parts;
+                  const isImage = fileName.match(/\.(jpg|jpeg|png|gif)$/i);
+                  return (
+                    <div>
+                      {isImage ? (
+                        <img 
+                          src={fileUrl} 
+                          alt={fileName} 
+                          loading="lazy" 
+                          style={{ maxWidth: '100%' }}
+                        />
+                      ) : (
+                        <a href={fileUrl} download={fileName} className={Style.fileLink}>
+                          <span>📎</span> {fileName}
+                        </a>
+                      )}
+                      <button 
+                        onClick={() => handleDecryptChatFile(fileName, fileUrl, passphraseHash, salt)}
+                        style={{ display: 'block', marginTop: '0.5rem' }}
+                      >
+                        Decrypt File
+                      </button>
+                    </div>
+                  );
+                })()
+              ) : el.msg.startsWith('[FILE]') ? (
+                (() => {
+                  const [name, data] = el.msg.slice(6).split('|');
+                  const isImage = name.match(/\.(jpg|jpeg|png|gif)$/i);
+                  const isPDF = name.match(/\.pdf$/i);
+                  return (
+                    <a href={data} download={name} className={Style.fileLink}>
+                      <div className={Style.filePreview}>
+                        {isImage ? (
+                          <>
+                            <span>🖼️</span>
+                            <span>{name}</span>
+                          </>
                         ) : isPDF ? (
-                          <a href={data} download={name}>
-                            <span>📄</span> {name}
-                          </a>
+                          <>
+                            <span>📄</span>
+                            <span>{name}</span>
+                          </>
                         ) : (
-                          <a href={data} download={name}>
-                            <span>📎</span> {name}
-                          </a>
-                        );
-                      })()
-                    ) : (
-                      <p>{el.msg}</p>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className={Style.Chat_box_empty}>
-                <h3>No messages yet</h3>
-                <p>Start the conversation by sending a message or scheduling an appointment!</p>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
+                          <>
+                            <span>📎</span>
+                            <span>{name}</span>
+                          </>
+                        )}
+                      </div>
+                    </a>
+                  );
+                })()
+              ) : (
+                <p>{el.msg}</p>
+              )}
+            </div>
           </div>
+        ))
+      ) : (
+        <div className={Style.Chat_box_empty}>
+          <h3>No messages yet</h3>
+          <p>Start the conversation by sending a message or scheduling an appointment!</p>
         </div>
-      </div>
+      )}
+      <div ref={messagesEndRef} />
+    </div>
+  </div>
+</div>
   
       {userName && account && (
         <div className={Style.Chat_box_send}>
@@ -925,7 +889,7 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                       onClick={() => setShowMetrics(!showMetrics)}
                       className={Style.metrics_toggle}
                     >
-                      {showMetrics ? '��� Hide Metrics' : '📊 Show Metrics'}
+                      {showMetrics ? '📊 Hide Metrics' : '📊 Show Metrics'}
                     </button>
                   </div>
   
@@ -951,7 +915,7 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
         </div>
       )}
   
-      {showAppointmentForm && (
+     {showAppointmentForm && (
         <div className={Style.modal_overlay}>
           <div className={Style.modal_content}>
             <div className={Style.appointment_header}>
@@ -970,7 +934,7 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
             
             <div className={Style.appointment_scroll_container}>
               <form onSubmit={handleAppointmentSubmit} className={Style.appointment_form}>
-                <div className={Style.appointment_section}>
+              <div className={Style.appointment_section}>
                   <h4 className={Style.section_title}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -1125,7 +1089,6 @@ ${appointmentData.symptoms ? `🔍 Symptoms: ${appointmentData.symptoms}` : ''}
                     </label>
                   </div>
                 </div>
-                
                 {selectedFiles.length > 0 && (
                   <div className={Style.appointment_section}>
                     <h4 className={Style.section_title}>

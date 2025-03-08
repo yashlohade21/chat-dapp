@@ -2,66 +2,42 @@ import React, { useState, useEffect, useContext } from 'react';
 import PatientSettingsForm from '../Components/Patient/PatientSettingsForm';
 import styles from '../Components/Patient/PatientSettingsForm.module.css';
 import { ChatAppContect } from '../Context/ChatAppContext';
-import Web3 from 'web3';
 
 const Settings = () => {
   const { account, userName } = useContext(ChatAppContect) || {};
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
-  const [documents, setDocuments] = useState([]); // Add this line
+  const [formData, setFormData] = useState(null);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('documents');
 
   useEffect(() => {
-    const loadProfile = async () => {
+    const loadSettings = async () => {
       if (!account) {
         setLoading(false);
         return;
       }
 
       try {
-        const web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
-        const contractAddress = 'YOUR_CONTRACT_ADDRESS';
-        const abi = [/* YOUR_CONTRACT_ABI */];
-        const contract = new web3.eth.Contract(abi, contractAddress);
-
-        const profile = await contract.methods.getProfile().call({ from: account });
-        setFormData({ name: profile[0], email: profile[1], phone: profile[2] });
-
-        // Load documents (if applicable)
-        const storedDocuments = JSON.parse(localStorage.getItem('secureFileStorage') || '{}');
-        const userDocs = Object.values(storedDocuments).filter(doc => doc.owner === account);
-        setDocuments(userDocs); // Set documents state
+        const storedData = JSON.parse(localStorage.getItem('patientFormData') || '{}');
+        
+        if (storedData.owner === account) {
+          setFormData(storedData);
+          
+          const secureStorage = JSON.parse(localStorage.getItem('secureFileStorage') || '{}');
+          const userDocs = Object.values(secureStorage).filter(doc => doc.owner === account);
+          setDocuments(userDocs);
+        }
       } catch (error) {
-        console.error('Error loading profile:', error);
-        setError('Failed to load profile');
+        console.error('Error loading settings:', error);
+        setError('Failed to load settings');
       } finally {
         setLoading(false);
       }
     };
 
-    loadProfile();
+    loadSettings();
   }, [account]);
-
-  const saveProfile = async () => {
-    try {
-      const web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
-      const contractAddress = 'YOUR_CONTRACT_ADDRESS';
-      const abi = [/* YOUR_CONTRACT_ABI */];
-      const contract = new web3.eth.Contract(abi, contractAddress);
-
-      await contract.methods.saveProfile(formData.name, formData.email, formData.phone).send({ from: account });
-      alert('Profile saved successfully!');
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      setError('Failed to save profile');
-    }
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
 
   if (!account) {
     return (
@@ -159,45 +135,21 @@ const Settings = () => {
         <div className={styles.settingsLayout}>
           {activeTab === 'documents' && (
             <PatientSettingsForm 
-              onDocumentsUpdate={setDocuments} // Pass setDocuments to PatientSettingsForm
+              onDocumentsUpdate={setDocuments}
               initialDocuments={documents}
               initialFormData={formData}
             />
           )}
           
           {activeTab === 'profile' && (
-            <div className={styles.profileForm}>
-              <h2>Profile Settings</h2>
-              <form onSubmit={(e) => { e.preventDefault(); saveProfile(); }}>
-                <div className={styles.formGroup}>
-                  <label>Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Phone</label>
-                  <input
-                    type="text"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <button type="submit" className={styles.saveButton}>Save Profile</button>
-              </form>
+            <div className={styles.comingSoonCard}>
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <h2>Profile Settings Coming Soon</h2>
+              <p>We're working on this feature. Check back soon for updates!</p>
             </div>
           )}
           

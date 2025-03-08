@@ -1,4 +1,3 @@
-/* Base Styles */
 .Chat {
   padding: 1rem;
   background-color: var(--card-bg-color);
@@ -118,34 +117,68 @@
 }
 
 .Chat_box_box {
-  height: calc(80vh - 160px);
-  overflow-y: auto;
+  width: 100%;
+  max-width: 800px; /* Adjust based on your layout */
+  margin: 0 auto;
+  overflow-y: auto; /* Enable vertical scrolling for the chatbox */
+  padding-bottom: 10px; /* Add space for the scrollbar */
+}
+
+.Chat_box {
+  width: 100%;
+}
+
+.Chat_box_left {
+  display: flex;
+  flex-direction: column; /* Stack messages vertically */
+  gap: 1rem; /* Add spacing between messages */
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 16px;
-  border: 1px solid var(--border-color);
-  margin-bottom: 70px;
-  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
-  scrollbar-width: thin; /* For Firefox */
-  scrollbar-color: var(--primary-color) rgba(0, 0, 0, 0.05); /* For Firefox */
+}
+
+.Chat_message_container {
+  width: 100%; /* Each message takes full width */
+  max-width: 100%; /* Prevent messages from exceeding the chatbox width */
+  background-color: rgba(46, 125, 50, 0.05);
+  border: 1px solid rgba(46, 125, 50, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.Chat_message_text {
+  width: 100%;
+  max-width: 100%; /* Ensure content doesn't overflow */
+  overflow-y: auto; /* Enable vertical scrolling for wide content */
+  max-height: 200px; /* Set a max height for the message container */
+  padding: 10px;
+  border-radius: 8px;
+  background-color: rgba(46, 125, 50, 0.05);
+  border: 1px solid rgba(46, 125, 50, 0.2);
+  margin-bottom: 10px;
+  word-wrap: break-word; /* Break long words to prevent horizontal overflow */
+}
+
+.Chat_box_empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
 }
 
 /* Enhance scrollbar styling */
-.Chat_box_box::-webkit-scrollbar {
-  width: 6px;
+.Chat_message_text::-webkit-scrollbar {
+  width: 6px; /* Set the width of the vertical scrollbar */
 }
 
-.Chat_box_box::-webkit-scrollbar-track {
+.Chat_message_text::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.05);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
-.Chat_box_box::-webkit-scrollbar-thumb {
+.Chat_message_text::-webkit-scrollbar-thumb {
   background: var(--primary-color);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
-.Chat_box_box::-webkit-scrollbar-thumb:hover {
+.Chat_message_text::-webkit-scrollbar-thumb:hover {
   background: var(--primary-dark);
 }
 
@@ -165,13 +198,13 @@
   }
 }
 
-.Chat_box {
+/* .Chat_box {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   max-width: 100%;
   min-height: 100%;
-}
+} */
 
 .Chat_box_left_title {
   display: flex;
@@ -203,7 +236,7 @@
   animation: fadeIn 0.3s ease-out;
 }
 
-.Chat_message_text {
+/* .Chat_message_text {
   background: linear-gradient(145deg, rgba(46, 125, 50, 0.1), rgba(46, 125, 50, 0.05));
   padding: 1.2rem;
   border-radius: 12px;
@@ -217,7 +250,7 @@
   white-space: pre-line;
   max-width: calc(100% - 5rem);
   transition: transform 0.2s ease;
-}
+} */
 
 .Chat_message_text:hover {
   transform: translateY(-2px);
@@ -302,7 +335,6 @@
   box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
 }
 
-/* Base Styles */
 .message_input {
   flex: 1;
   height: 45px;
@@ -315,24 +347,6 @@
   transition: all 0.3s ease;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  .message_input {
-    height: 40px;
-    padding: 0 1rem;
-    font-size: 0.9rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .message_input {
-    height: 35px;
-    padding: 0 0.8rem;
-    font-size: 0.8rem;
-  }
-}
-
-/* Focus State */
 .message_input:focus {
   outline: none;
   border-color: var(--primary-color);
@@ -340,7 +354,6 @@
   box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
 }
 
-/* Disabled State */
 .input_disabled {
   opacity: 0.7;
   cursor: not-allowed;
@@ -418,7 +431,7 @@
 }
 
 /* Empty state improvements */
-.Chat_box_empty {
+/* .Chat_box_empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -428,7 +441,7 @@
   text-align: center;
   padding: 1.5rem;
   animation: fadeIn 0.5s ease-out;
-}
+} */
 
 .Chat_box_empty h3 {
   color: var(--primary-color);
