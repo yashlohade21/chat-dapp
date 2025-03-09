@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, memo, useCallback, useContext } from "react";
+import React, { useEffect, useState, useRef, useCallback, useContext } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import {
@@ -16,10 +16,9 @@ import images from "../../../assets";
 import { converTime } from "../../../Utils/apiFeature";
 import { Loader } from "../../index";
 import { IPFSService } from "../../../Utils/IPFSService";
-import { encryptFileWithPassphrase, decryptFileWithPassphrase } from "../../../Utils/CryptoService";
-import CryptoJS from "crypto-js";
+import { decryptFileWithPassphrase } from "../../../Utils/CryptoService";
 import { ChatAppContect } from "../../../Context/ChatAppContext";
-import { noSSR } from "next/dynamic";
+
 
 const MetricsChart = React.memo(({ data }) => (
   <div className={Style.metrics_chart}>

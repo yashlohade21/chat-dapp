@@ -86,7 +86,7 @@ const initializeModel = async () => {
     }
   }
 };
-
+export const SUPPORTED_LANGUAGES = ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'zh', 'ja', 'ko', 'hi'];
 const updateModelWithNewKnowledge = async (userQuery, botResponse) => {
   if (!learningEnabled || !selfLearningModel || !encoder) return;
   

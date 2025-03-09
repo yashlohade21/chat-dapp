@@ -1,11 +1,12 @@
 // Import useContext and ChatAppContect at the top.
 import React, { useState, useContext } from "react";
 import { ChatAppContect } from "../Context/ChatAppContext";
-// ... other imports ...
+import MedicalFileUpload from '../Components/HIPAA/MedicalFileUpload';
+import PHIWarningDialog from "../Components/HIPAA/PHIWarningDialog";
 
 const HIPAACompliance = () => {
   const [showPHIWarning, setShowPHIWarning] = useState(false);
-  const [detectedPHI, setDetectedPHI] = useState([]);
+  const [detectedPHI] = useState([]);
   
   // Retrieve the current account from context.
   const { account } = useContext(ChatAppContect);
